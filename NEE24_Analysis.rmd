@@ -184,19 +184,59 @@ unlist(models)
 
 ```{r, eval=FALSE}
 # Get best p for all models with intercept only
-p.res <- sbplx(c(0.5, 0.5, 0.5),
+
+# Define the parameter grid
+param_values <- c(0.05, 0.25, 0.5, 0.75, 0.95)
+
+# Generate all combinations
+init_ps <- expand.grid(p1 = param_values, 
+                       p2 = param_values, 
+                       p3 = param_values)
+
+# Convert each row to a numeric vector
+init_ps_list <- split(init_ps, seq(nrow(init_ps)))
+init_ps_list <- lapply(init_ps_list, function(df) as.numeric(df))
+
+# Run mclapply over all combinations
+p_fits <- mclapply(
+  X = init_ps_list,
+  FUN = function(p) sbplx(p,
+                          best_p,
+                          formula = Phoneme.Inventory.Size ~ 1,
+                          data = nee24,
+                          spmatrix = spmatrix,
+                          phylomatrix = phylomatrix,
+                          lower = c(0,0,0),
+                          upper = c(1,1,1),
+                          nl.info = TRUE),
+  mc.cores = 8
+)
+
+
+p_fits <- mclapply(
+  X = init_ps,
+  FUN = function(p) sbplx(p,
                best_p,
                formula=Phoneme.Inventory.Size~1,
                data=nee24,
                spmatrix=spmatrix,phylomatrix=phylomatrix,
                lower=c(0,0,0),upper=c(1,1,1),
-               nl.info = TRUE)
+               nl.info = TRUE),
+  mc.cores = 8
+)
+
+# p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                best_p,
+#                formula=Phoneme.Inventory.Size~1,
+#                data=nee24,
+#                spmatrix=spmatrix,phylomatrix=phylomatrix,
+#                lower=c(0,0,0),upper=c(1,1,1),
+#                nl.info = TRUE)
 ```
 
 ### Maximum likelihood fits for all models
 
 ```{r, eval=FALSE}
-lm.res_list <- c()
 
 ml_fits <- mclapply(
   X = models,
