@@ -41,7 +41,8 @@ print(spmatrix[1:5,1:5])
 ## Loading NEE24 (1)
 
 ```{r}
-nee24 <- read.csv("data/Islands are engines of language diversity data.csv")
+nee24 <- read.csv("data/Islands are engines of language diversity data.csv",
+                  stringsAsFactors = FALSE)
 ```
 
 ### NEE24 Cleanup
