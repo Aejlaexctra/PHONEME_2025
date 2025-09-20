@@ -157,6 +157,54 @@ ml_fit <- function (p,formula,data,spmatrix,phylomatrix) {
 }
 ```
 
+### Testing GLS runtime
+
+```{r}
+# Start profiling, save to file "out.prof"
+Rprof("best_p.prof")
+
+init_p_test = c(0.5,0.5,0.5)
+
+# Run some slow code
+best_p(p = init_p_test,
+                 formula = Phoneme.Inventory.Size ~ 1,
+                 data = nee24,
+                 spmatrix = spmatrix,
+                 phylomatrix = phylomatrix)
+
+# Stop profiling
+Rprof(NULL)
+
+# Summarize results
+summaryRprof("best_p.prof")
+```
+
+### Debugging GLS try-error
+
+```{r}
+
+best_p_test <- function (p,formula,data,spmatrix,phylomatrix) {
+    spmatrix <- spmatrix/max(spmatrix)
+    spmatrix <- exp(-(spmatrix/p[2])^2)
+    mat <- as.matrix((p[3]*(1-p[1])*spmatrix+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1])))
+    res <- tryCatch(
+      gls(model = Phoneme.Inventory.Size ~ 1, data = nee24,
+          correlation = corSymm(mat[lower.tri(mat)], fixed = TRUE),
+          method = "ML"),
+      error = function(e) e
+      )
+    if (inherits(res, "error")) {
+      cat("gls error message:\n", res$message, "\n")
+      } else {
+        res$logLik
+      }
+}
+
+out_test <- best_p_test(p=init_p_test,formula = Phoneme.Inventory.Size ~ 1,data = nee24,spmatrix = spmatrix,phylomatrix = phylomatrix)
+
+print(out_test)
+```
+
 ## Model predictor combinations
 
 ```{r}
@@ -180,9 +228,40 @@ unlist(models)
 
 ## Fitting Models
 
+### Searching for viable initial p value
+
+```{r}
+# Get best p for all models with intercept only
+
+# Define the parameter grid
+param_values <- c(0.25, 0.5, 0.75)
+
+# Generate all combinations
+init_ps <- expand.grid(p1 = param_values, 
+                       p2 = param_values, 
+                       p3 = param_values)
+
+# Convert each row to a numeric vector
+init_ps_list <- split(init_ps, seq(nrow(init_ps)))
+init_ps_list <- lapply(init_ps_list, function(df) as.numeric(df))
+
+# Run mclapply over all combinations
+best_p_outs <- mclapply(
+  X = init_ps_list,
+  FUN = function(p) best_p(p=p,
+                          formula = Phoneme.Inventory.Size ~ 1,
+                          data = nee24,
+                          spmatrix = spmatrix,
+                          phylomatrix = phylomatrix),
+  mc.cores = 7
+)
+
+print(best_p_outs)
+```
+
 ### Best p values for all models
 
-```{r, eval=FALSE}
+```{r}
 # Get best p for all models with intercept only
 
 # Define the parameter grid
@@ -209,20 +288,7 @@ p_fits <- mclapply(
                           lower = c(0,0,0),
                           upper = c(1,1,1),
                           nl.info = TRUE),
-  mc.cores = 8
-)
-
-
-p_fits <- mclapply(
-  X = init_ps,
-  FUN = function(p) sbplx(p,
-               best_p,
-               formula=Phoneme.Inventory.Size~1,
-               data=nee24,
-               spmatrix=spmatrix,phylomatrix=phylomatrix,
-               lower=c(0,0,0),upper=c(1,1,1),
-               nl.info = TRUE),
-  mc.cores = 8
+  mc.cores = 7
 )
 
 # p.res <- sbplx(c(0.5, 0.5, 0.5),
@@ -236,7 +302,7 @@ p_fits <- mclapply(
 
 ### Maximum likelihood fits for all models
 
-```{r, eval=FALSE}
+```{r}
 
 ml_fits <- mclapply(
   X = models,
