@@ -226,7 +226,7 @@ best_p <- function (p,formula,data,spmatrix,phylomatrix) {
       out <- -10000
     } else {
       out <- res$logLik
-      # if (res$logLik>0) {out <- -10000} # TESTING WITH POSITIVE LOG-LIKE
+      if (res$logLik>0) {out <- -10000}
     }
     -out
 }
