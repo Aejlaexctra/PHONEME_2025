@@ -297,7 +297,7 @@ response <- "Phoneme_Count"
 n_pred <- length(predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(predictors, x))
 
-models <- c(Phoneme.Inventory.Size~1)
+models <- c(Phoneme_Count~1)
 for (i in 1:n_pred) {
     #print(pred_combs[[i]])
     for (j in 1:dim(pred_combs[[i]])[2]) {
@@ -397,6 +397,8 @@ ml_fits <- mclapply(
 ## Model Comparison
 
 ```{r}
+ml_summary <- lapply(ml_fits, summary)
+ml_BIC <- sapply(ml_summary, function(summ) summ$BIC)
 
 ```
 
