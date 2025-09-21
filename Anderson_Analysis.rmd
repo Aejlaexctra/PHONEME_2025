@@ -51,18 +51,6 @@ nee24 <- read.csv("data/Islands are engines of language diversity data.csv",
 ### NEE24 Cleanup
 
 ```{r}
-# --- Remove all NA entries ---
-paste("Size of initial dataset:", dim(nee24)[1])
-paste("#Island_Endemic: ", sum(nee24$Island.Endemic))
-paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)[1])
-old_nee24 <- nee24
-nee24 <- na.omit(nee24) 
-paste("Number of incomplete (NA) language entries removed:", 
-      dim(old_nee24)[1] - dim(nee24)[1])
-paste("Size of dataset with NA remove:", dim(nee24)[1])
-paste("#Island_Endemic: ", sum(nee24$Island.Endemic))
-paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)[1])
-
 # --- Convert variable types ---
 nee24$Island.Endemic <- as.numeric(nee24$Island.Endemic)
 
@@ -82,15 +70,106 @@ head(nee24)
 summary(nee24)
 ```
 
-## Adjusting NEE24 data with matrices
+## Loading NEE22 (3)
+
+```{r}
+nee22 <- read.csv("data/Global predictors of language endangerment and the future of linguistic diversity Data 2.csv",
+                  stringsAsFactors = FALSE)
+```
+
+### NEE22 Cleanup
+
+```{r}
+# Convert Documention variable from string to integer
+nee22$documentation[nee22$documentation == "little or none"] <- "0"
+nee22$documentation[nee22$documentation == "basic"] <- "1"
+nee22$documentation[nee22$documentation == "detailed"] <- "2"
+nee22$documentation <- as.integer(nee22$documentation)
+
+# --- Log transform variables ---
+nee22$L1_pop <- log(nee22$L1_pop + 0.5)
+nee22$bordering_language_richness <- log(nee22$bordering_language_richness + 0.5)
+nee22$altitude_range <- log(nee22$altitude_range + 0.5)
+```
+
+### Preview data
+
+```{r}
+head(nee22)
+summary(nee22)
+```
+
+## Loading phoible (4) 
+
+```{r}
+var_phon_inv_spec_data <- read.csv("Data/cldf-datasets-inventory-study/PHOIBLE-data.csv")
+var_phon_inv_glot_data <- read.csv("Data/cldf-datasets-inventory-study/phoible/cldf/languages.csv")
+
+phoible <- merge(
+  var_phon_inv_spec_data[, c("Glottocode", "Sounds", "Latitude", "Longitude")],
+  var_phon_inv_glot_data[, c("ISO639P3code", "Glottocode")], by.x = "Glottocode", by.y = "Glottocode", all.x = TRUE)
+```
+
+### Phoible Cleanup
+
+```{r}
+# --- Remove duplicate glottocode entries
+print("Duplicate Glottocode entries:")
+glotto_duplicates <- duplicated(phoible$Glottocode)
+print(phoible$Glottocode[glotto_duplicates])
+phoible <- phoible[!unlist(glotto_duplicates),]
+paste("Size of dataset after duplicates removed:", dim(phoible)[1])
+
+# --- Log transform variables ---
+phoible$Phoneme_Count <- log(phoible$Sounds)
+```
+
+### Preview data
+
+```{r}
+head(phoible)
+summary(phoible)
+```
+
+## Merging Datasets
+
+```{r}
+data <- merge(
+  nee22[, 
+                   c("ISO", "L1_pop", "region", "bordering_language_richness", 
+                     "roughness", "altitude_range", "documentation")],
+  phoible[, c("ISO639P3code", "Glottocode", "Latitude", "Longitude", "Phoneme_Count")], by.x = "ISO", by.y = "ISO639P3code", all.x = TRUE)
+
+data <- merge(data, nee24[, c("ISO693.3", "Island.Endemic", "Distance.to.Mainland", "Distance.to.Continent", "Range.Size..km2.")], 
+              by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
+```
+
+### Data Cleanup
+
+```{r}
+# --- Remove all NA entries ---
+paste("Size of initial dataset:", dim(data)[1])
+old_data <- data
+data <- na.omit(data) 
+paste("Size of dataset with NA removed:", dim(data)[1])
+
+# --- Remove iso duplicate entries
+print("Duplicate iso entries:")
+iso_duplicates <- duplicated(data$ISO)
+print(data$ISO[iso_duplicates])
+data <- data[!unlist(iso_duplicates),]
+paste("Size of dataset after duplicates removed:", dim(data[1]))
+```
+
+## Adjusting data with matrices
 
 ```{r}
 common_ids <- Reduce(intersect, list(
-  nee24$ISO,
+  data$ISO,
   rownames(phylomatrix),
   rownames(spmatrix)
 ))
-nee24 <- nee24[nee24$ISO %in% common_ids, ]
+data <- data[data$ISO %in% common_ids, ]
 phylomatrix <- phylomatrix[common_ids, common_ids]
 spmatrix <- spmatrix[common_ids, common_ids]
 ```
@@ -98,26 +177,30 @@ spmatrix <- spmatrix[common_ids, common_ids]
 ### Preview Data
 
 ```{r}
-paste("Size of dataset adjusted:", dim(nee24)[1])
-paste("#Island_Endemic: ", sum(nee24$Island.Endemic))
-paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)[1])
+paste("Size of dataset adjusted:", dim(data)[1])
+paste("#Island_Endemic: ", sum(data$Island.Endemic))
+paste("#Island_Endemic to Total Ratio: ", sum(data$Island.Endemic) / dim(data)[1])
 ```
 
 ### Variable Correlations
 
 ```{r}
-pairs(nee24[,
-            c("Phoneme.Inventory.Size", "Range.Size..km2.",
-              "L1.Population", "Distance.to.Mainland", "Distance.to.Continent")],
+pairs(data[,
+            c("Phoneme_Count", "Range.Size..km2.",
+              "L1_pop", "Distance.to.Mainland", "Distance.to.Continent",
+              "altitude_range", "bordering_language_richness"
+              )],
       panel = function(x, y, ...) {
         points(x, y, cex = 0.1, ...) # cex = 0.5 makes points half the default size
       })
 
-cor(nee24[,
-            c("Phoneme.Inventory.Size", "Range.Size..km2.",
-              "L1.Population", "Distance.to.Mainland", "Distance.to.Continent")])
+cor(data[,
+            c("Phoneme_Count", "Range.Size..km2.",
+              "L1_pop", "Distance.to.Mainland", "Distance.to.Continent",
+              "altitude_range", "bordering_language_richness"
+              )])
 
-cor.test(nee24$Phoneme.Inventory.Size,nee24$Island.Endemic)
+cor.test(data$Phoneme_Count,data$Island.Endemic)
 ```
 
 ### Preview Matrices
@@ -209,8 +292,8 @@ print(out_test)
 
 ```{r}
 predictors <- c("Island.Endemic", "Range.Size..km2.",
-              "L1.Population", "Distance.to.Mainland", "Distance.to.Continent")
-response <- "Phoneme.Inventory.Size"
+              "L1_pop", "Distance.to.Mainland", "Distance.to.Continent")
+response <- "Phoneme_Count"
 n_pred <- length(predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(predictors, x))
 
@@ -249,8 +332,8 @@ init_ps_list <- lapply(init_ps_list, function(df) as.numeric(df))
 best_p_outs <- mclapply(
   X = init_ps_list,
   FUN = function(p) best_p(p=p,
-                          formula = Phoneme.Inventory.Size ~ 1,
-                          data = nee24,
+                          formula = Phoneme_Count ~ 1,
+                          data = data,
                           spmatrix = spmatrix,
                           phylomatrix = phylomatrix),
   mc.cores = 7
@@ -293,8 +376,8 @@ print(best_p_outs)
 
 p.res <- sbplx(c(0.5, 0.5, 0.5),
                best_p,
-               formula=Phoneme.Inventory.Size~1,
-               data=nee24,
+               formula=Phoneme_Count~1,
+               data=data,
                spmatrix=spmatrix,phylomatrix=phylomatrix,
                lower=c(0,0,0),upper=c(1,1,1),
                nl.info = TRUE)
@@ -306,7 +389,7 @@ p.res <- sbplx(c(0.5, 0.5, 0.5),
 
 ml_fits <- mclapply(
   X = models,
-  FUN = function(f) ml_fit(p=p.res$par,formula=f,data=nee24,spmatrix=spmatrix,phylomatrix=phylomatrix),
+  FUN = function(f) ml_fit(p=p.res$par,formula=f,data=data,spmatrix=spmatrix,phylomatrix=phylomatrix),
   mc.cores = 6
 )
 ```
@@ -321,3 +404,6 @@ ml_fits <- mclapply(
 
 1.  Bromham, L., Yaxley, K.J. & Cardillo, M. Islands are engines of language diversity. *Nat Ecol Evol* **8**, 1991–2002 (2024). <https://doi.org/10.1038/s41559-024-02488-4>
 2.  Hua, X., Greenhill, S.J., Cardillo, M. *et al.* The ecological drivers of variation in global language diversity. *Nat Commun* **10**, 2047 (2019). <https://doi.org/10.1038/s41467-019-09842-2>
+3.  Bromham, L., Dinnage, R., Skirgård, H. *et al.* Global predictors of language endangerment and the future of linguistic diversity.
+    *Nat Ecol Evol* **6**, 163–173 (2022). <https://doi.org/10.1038/s41559-021-01604-y>
+4.  Cormac Anderson, Tiago Tresoldi, Simon J Greenhill, Robert Forkel, Russell Gray, Johann-Mattis List, Variation in phoneme inventories: quantifying the problem and improving comparability, *Journal of Language Evolution*, Volume 8, Issue 2, July 2023, Pages 149–168, <https://doi.org/10.1093/jole/lzad011>
