@@ -17,6 +17,10 @@ library(nlme)
 library(parallel)
 ```
 
+```{r}
+set.seed(42)
+```
+
 # Data
 
 ## Loading Phylogenetic and Spatial Distance Matrices
@@ -101,6 +105,8 @@ spmatrix <- spmatrix[common_ids, common_ids]
 paste("Size of dataset adjusted:", dim(nee24)[1])
 paste("#Island_Endemic: ", sum(nee24$Island.Endemic))
 paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)[1])
+# save data 
+write.csv(nee24, file = "data/nee24_adjusted.csv")
 ```
 
 ### Variable Correlations
@@ -127,9 +133,23 @@ print(dim(phylomatrix))
 print(dim(spmatrix))
 print(phylomatrix[1:10,1:10])
 print(spmatrix[1:10,1:10])
+
+save(phylomatrix, file = "data/phylomatrix.RData") 
+save(spmatrix, file = "data/spmatrix.RData")
 ```
 
 # Analysis - Generalised Least Squares (GLS) (2)
+
+## Testing GLS operation
+
+```{r,include=FALSE}
+p = c(0.5,0.5,0.5)
+spmatrix_test <- spmatrix/max(spmatrix)
+spmatrix_test <- exp(-(spmatrix_test/p[2])^2)
+mat <- as.matrix((p[3]*(1-p[1])*spmatrix_test+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1])))
+res <- gls(model=Phoneme.Inventory.Size~1,data=nee24,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML")
+print(-res$logLik)
+```
 
 ## GLS Setup (2)
 
@@ -143,7 +163,7 @@ best_p <- function (p,formula,data,spmatrix,phylomatrix) {
       out <- -10000
     } else {
       out <- res$logLik
-      # if (res$logLik>0) {out <- -10000} # TESTING WITH POSITIVE LOG-LIKE
+      if (res$logLik>0) {out <- -10000}
     }
     -out
 }
