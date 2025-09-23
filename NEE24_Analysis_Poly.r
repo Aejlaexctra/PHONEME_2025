@@ -19,14 +19,35 @@ library(parallel)
 load("data/phylomatrix.RData")
 load("data/spmatrix.RData")
 load("data/Wnb.Rdata")
+Wphy <- phylomatrix 
+Wsp <- spmatrix
 
 # Set phylomatrix diagonal to 0
-diag(phylomatrix) <- 0
+diag(Wphy) <- 0
+
+# Find languages which have zero rows in matrices (Wphy and Wnb)
+length(which(rowSums(Wnb) == 0))
+length(which(rowSums(Wphy) == 0))
+length(which(rowSums(Wsp) == 0))
+zero_row_languages <- union(which(rowSums(Wnb) == 0),which(rowSums(Wphy) == 0))
+paste("Number of languages to be removed:", length(zero_row_languages))
+
+# Remove zero row languages from data and matrices
+rawdata <- rawdata[-zero_row_languages,]
+Wphy <- Wphy[-zero_row_languages,-zero_row_languages]
+Wsp <- Wsp[-zero_row_languages,-zero_row_languages]
+Wnb <- Wnb[-zero_row_languages,-zero_row_languages]
+paste("Size of dataset after zero row languages removed:", dim(rawdata)[1])
 
 # Row standardise matrices used 
-Wphy <- phylomatrix / rowSums(phylomatrix)
-Wsp <- spmatrix / rowSums(spmatrix)
+Wphy <- Wphy / rowSums(Wphy)
+Wsp <- Wsp / rowSums(Wsp)
 Wnb <- Wnb / rowSums(Wnb)
+
+# # Ensure that NA valeus in matrices are replaced by zero (due to zero rows during row-standardisation)
+# Wphy[is.na(Wphy)] <- 0
+# Wsp[is.na(Wsp)] <- 0
+# Wnb[is.na(Wnb)] <- 0
 
 #extract eigenvectors
 #using SAR model
@@ -140,7 +161,7 @@ objfunc <-function(y, xe, W) {
 }
 
 #calculate initial AIC and Moran's I^2=
-init <- glm(y~x-1, family=binomial(link=probit), maxit = 100)
+init <- glm(y~x-1, family=gaussian, maxit = 100)
 AIC_init <- init$aic
 Rsquared_init <- 1-(init$deviance/init$null.deviance)
 resid_init <- (y - init$fitted.values) / sqrt(init$fitted.values * (1 - init$fitted.values)) #pearson residual
@@ -161,7 +182,7 @@ for (i in which(sel)) {
   
   for (j in selset) {
     xe <- cbind(x, evecs[, sel_id], evecs[, j])
-    test <- glm(y~xe-1, family=binomial(link=probit), maxit = 1000)
+    test <- glm(y~xe-1, family=gaussian, maxit = 1000)
     test <- test$aic
     if (test < ref) {
       sid <- j
@@ -233,37 +254,7 @@ MI_out <- MI.resid(resid=resid_out,W=W)
 #using rjMCMC to estimate PIP
 #generate datasets for gregl
 data <- cbind(data,ev=evecs[, sel_id])
-write.csv(data,file="polydata_parma.csv")
+write.csv(data,file="data/NEE24_polydata_parma.csv")
 
-#install gregl
-#open the csv file in gregl
-#include ParMA package
-include ParMA.gfn
-#define X variables
-list X = Range.Size..km2. L1.Population Island.Endemic Distance.to.Mainland Distance.to.Continent ev
-#always include ev
-list focus = ev
-#define starting variables
-starting = {1,0,0,0,0,0,0,0;0,1,0,0,0,0,0,0;0,0,1,0,0,0,0,0;0,0,0,1,0,0,0,0;0,0,0,0,1,0,0,0;0,0,0,0,0,1,0,0;0,0,0,0,0,0,1,0;0,0,0,0,0,0,0,1}
-#define model type
-modeltype = "probit"
-#initiate parallel MCMC
-bundle param = defbundle("start",starting,"focus",focus,"mpi",8,"seed",271828)
-#define MCMC
-n_iter = 1000000
-burn_in=10000
-param.resamp=1
-#run
-b = bma_glm(Polysynthetic, X, modeltype, n_iter, burn_in, param)
-#check for convergence, high autocorrelation
-c = mcmc_checks(b, "plot")
-c = mcmc_checks(b, "ESS")
-c = mcmc_checks(b, "Geweke")
-c = mcmc_checks(b, "HW")
-
-#extended
-b2=bma_glm(Extended, X, modeltype, n_iter, burn_in, param)
-c = mcmc_checks(b2, "plot")
-c = mcmc_checks(b2, "ESS")
-c = mcmc_checks(b2, "Geweke")
-c = mcmc_checks(b2, "HW")
+#install gretl
+#open the csv file in gretl

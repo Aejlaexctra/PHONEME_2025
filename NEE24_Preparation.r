@@ -50,7 +50,7 @@ paste("Size of dataset adjusted:", dim(nee24)[1])
 paste("#Island_Endemic: ", sum(nee24$Island.Endemic))
 paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)[1])
 # save data 
-write.csv(nee24, file = "data/nee24_adjusted.csv")
+write.csv(nee24, file = "data/nee24_adjusted.csv", row.names=FALSE)
 
 # Preview and save matrices
 print(dim(phylomatrix))
