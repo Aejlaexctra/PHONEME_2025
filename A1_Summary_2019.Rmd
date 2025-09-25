@@ -1,0 +1,194 @@
+---
+title: "A1 Summary with 2019 Method"
+author: "Samuel Ingloff-Richards"
+date: "2025-09-25"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+```
+
+# Preview data and matrices
+
+```{r}
+A1 <- read.csv("output/A1/A1_adjusted.csv")
+nee22 <- read.csv("data/Global predictors of language endangerment and the future of linguistic diversity Data 2.csv")  # (3)
+load("output/A1/phylomatrix.RData")
+load("output/A1/spmatrix.RData")
+load("output/A1/ml_model.RData")
+```
+
+## A1 Dataset
+
+```{r}
+dim(A1)
+print(A1[1:6,],width = 150)
+```
+
+## Overview
+
+-   769 languages in dataset
+
+## Spatial Distance (3) Matrix
+
+```{r}
+paste(dim(spmatrix))
+paste("Is symmetric? ", isSymmetric(spmatrix))
+print(spmatrix[1:6,1:6])
+```
+
+## Phylogenetic (3) Matrix
+
+```{r}
+print(dim(phylomatrix))
+paste("Is symmetric? ", isSymmetric(phylomatrix))
+print(phylomatrix[1:6,1:6])
+```
+
+# Variable Table
+
+| Variable | Definition | Example (abu, abur1243, Abure) | Source |
+|----|----|----|----|
+| Phoneme.Inventory.Size | Number of phonemes in a language inventory. | 34 | (4) |
+| L1_pop | Number of L1 speakers for a language | 55100 | (3) |
+
+# Method Overview
+
+1.  Merge data from (3) and (4).
+
+2.  Remove NA entries in merged data.
+
+3.  Remove duplicate languages (due to Phoible having multiple inventories for same language, or many Glottocodes for ISO639-3).
+
+4.  Adjust size of matrices with merged data to only shared languages, ending up with 769 languages.
+
+5.  Log transform variables
+
+6.  Find optimal p vector (encoding weighting of spatial and phylogenetic matrices) using 2019 (2) method, on only model: `Phoneme.Inventory.Size ~ L1_pop`
+
+7.  Using 2019 (2) method and optimal p vector from step 6, find generalised least squares (GLS) maximum likelihood solution for each model.
+
+# Results
+
+## Phoneme.Inventory.Size \~ L1_pop scatterplot grouped by region.
+
+```{r}
+# Plot data
+phoneme_L1_scatter <- ggplot(A1, aes(x = log(L1_pop+0.5), y = log(Phoneme.Inventory.Size), color = factor(region, levels = unique(region)))) + 
+  geom_point() + 
+  # stat_ellipse(geom = "polygon", alpha = 0.2, aes(fill = group)) + 
+  labs(x = "Log(L1_pop+0.5)", y = "Log(Phoneme.Inventory.Size)", color = "Region") +
+  theme_minimal()
+
+# Save graph
+ggsave("output/A1/phoneme_to_L1_scatter.png", plot = phoneme_L1_scatter, width = 15, height = 15, dpi = 300)
+
+# Show graph
+print(phoneme_L1_scatter)
+```
+
+## Testing for region sampling bias
+
+```{r}
+# number of repetitions
+n_rep = 1e4
+
+# Get region names
+region_names <- unique(A1$region)
+region_names <- sort(region_names)
+
+# Find number of languages in each region for A1
+A1_region_tally <- as.data.frame(table(A1$region))
+A1_region_tally <- A1_region_tally[match(region_names, A1_region_tally$Var1), ]
+
+region_sample_tallies <- data.frame(matrix(ncol = length(region_names), nrow = n_rep))
+colnames(region_sample_tallies) <- region_names # Set column names
+
+# Repeated n_rep times, randomly sample without replacement 
+for(i in 1:n_rep){
+  
+  # Get region sample
+  region_sample <- sample(nee22$region, size = length(A1$region), replace = FALSE)
+  
+  # Current region tally.
+  region_sample_tally = table(region_sample)
+  
+  # Add current tally to all tally data
+  region_sample_tallies[i, names(region_sample_tally)] <- as.numeric(region_sample_tally)
+   
+}
+
+# Reshape the dataframe to long format
+region_sample_tallies_long <- pivot_longer(region_sample_tallies, everything(), names_to = c("Group"), values_to = 'Value')
+
+# Set 'Group' as a factor with levels in the desired order, this is to ensure that ggplot doesn't alphabetically sort the regions.
+region_sample_tallies_long$Group <- factor(region_sample_tallies_long$Group, levels = region_names)
+
+region_box <- ggplot(region_sample_tallies_long, aes(x = Group, y = Value)) +
+  geom_boxplot(varwidth = TRUE) +
+  geom_point(data = A1_region_tally, 
+             aes(x = region_names, y = Freq), 
+             color = "red",
+             size = 2) + 
+  ylab("Number of Languages Sampled") +
+  xlab("Region") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        axis.title.x.bottom = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        axis.title.y.left = element_text(size = 10))
+
+# Save graph
+ggsave("output/A1/region_sampling.png", plot = region_box, width = 15, height = 15, dpi = 300)
+
+print(region_box)
+
+```
+
+*Randomly sampled languages from (3) data for their region values, and compared sampling distribution with observed region values in A1 data.*
+
+# Phoneme.Inventory.Size across regions
+
+```{r}
+box_phoneme_regions <- ggplot(A1, aes(
+  x = factor(region),
+  y = Phoneme.Inventory.Size
+)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) +
+  labs(
+    x = "region",
+    y = "Phoneme.Inventory.Size"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(box_phoneme_regions)
+
+# Save graph
+ggsave("output/A1/phoneme_region_box.png", plot = box_phoneme_regions, width = 15, height = 15, dpi = 300)
+```
+
+# 
+
+## Results using 2019 (2) method
+
+```{r}
+print("Coefficients and p-values")
+summary(ml_model)$tTable
+paste("Log likelihood: ", summary(ml_model)$logLik)
+paste("BIC: ", summary(ml_model)$BIC)
+```
+
+# References
+
+1.  Bromham, L., Yaxley, K.J. & Cardillo, M. Islands are engines of language diversity. *Nat Ecol Evol* **8**, 1991–2002 (2024). <https://doi.org/10.1038/s41559-024-02488-4>
+2.  Hua, X., Greenhill, S.J., Cardillo, M. *et al.* The ecological drivers of variation in global language diversity. *Nat Commun* **10**, 2047 (2019). <https://doi.org/10.1038/s41467-019-09842-2>
+3.  Bromham, L., Dinnage, R., Skirgård, H. *et al.* Global predictors of language endangerment and the future of linguistic diversity. *Nat Ecol Evol* **6**, 163–173 (2022). <https://doi.org/10.1038/s41559-021-01604-y>
+4.  Cormac Anderson, Tiago Tresoldi, Simon J Greenhill, Robert Forkel, Russell Gray, Johann-Mattis List, Variation in phoneme inventories: quantifying the problem and improving comparability, *Journal of Language Evolution*, Volume 8, Issue 2, July 2023, Pages 149–168, <https://doi.org/10.1093/jole/lzad011>

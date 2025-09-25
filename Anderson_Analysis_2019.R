@@ -69,7 +69,7 @@ ml_fit <- function (p,formula,data,spmatrix,phylomatrix) {
   res
 }
 
-## Model predictor combinations
+# --- Model predictor combinations ---
 predictors <- c("Island.Endemic", "Range.Size..km2.",
                 "Distance.to.Mainland", "Distance.to.Continent",
                 "L1_pop", "altitude_range", 
@@ -103,6 +103,69 @@ ml_fits <- mclapply(
   FUN = function(f) ml_fit(p=p.res$par,formula=f,data=anderson,spmatrix=spmatrix,phylomatrix=phylomatrix),
   mc.cores = 8
 )
+# Save models
+saveRDS(ml_fits, "output/anderson/ml_fits.RData") 
 
-## Model Comparison
+# --- Model Comparison ---
+# Make empty NA list of coefficients and their respective p values in tuple form
+n <- length(ml_fits)
+ml_summaries <- list("Island.Endemic" = as.list(rep(NA,n)),
+                     "Range.Size..km2." = as.list(rep(NA,n)),
+                     "Distance.to.Mainland" = as.list(rep(NA,n)), 
+                     "Distance.to.Continent" = as.list(rep(NA,n)),
+                     "L1_pop" = as.list(rep(NA,n)), 
+                     "altitude_range" = as.list(rep(NA,n)), 
+                     "bordering_language_richness" = as.list(rep(NA,n)))
+ml_logLik <- c()
+ml_BIC <- c()
+ml_MSE <- c()
 
+for (i in 1:n){
+  # get current model summary
+  ml_summary <- summary(ml_fits[[i]])
+  # if intercept only model just get BIC, logLik and MLE
+  if(dim(ml_summary$tTable)[1] == 1) {
+    ml_logLik <- c(ml_logLik, ml_summary$logLik)
+    ml_BIC <- c(ml_BIC, ml_summary$BIC)
+    ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(anderson)[1])
+    next
+  }
+  # Get coefficient values
+  coef_val <- ml_summary$tTable[,1]
+  # Get corresponding p-values
+  coef_p <- ml_summary$tTable[,4]
+  # Get coefficient names
+  coef_names <- names(ml_summary$tTable[,4])
+  # Get number of coefficients
+  n_coef <- length(coef_names)
+  # Add coef info into model_summaries
+  for (j in 2:n_coef){
+    if(coef_p[j]<=0.05){
+      ml_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
+    } else {
+      ml_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
+    }
+  }
+  # Add BIC, logLik and MLE
+  ml_logLik <- c(ml_logLik, ml_summary$logLik)
+  ml_BIC <- c(ml_BIC, ml_summary$BIC)
+  ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(anderson)[1])
+}
+
+# Create new data frame from lists
+ml_data <- data.frame(BIC = ml_BIC,
+                      logLik = ml_logLik,
+                      MSE = ml_MSE,
+                      unlist(ml_summaries$Island.Endemic),
+                      unlist(ml_summaries$Range.Size..km2.),
+                      unlist(ml_summaries$Distance.to.Mainland),
+                      unlist(ml_summaries$Distance.to.Continent),
+                      unlist(ml_summaries$L1_pop),
+                      unlist(ml_summaries$altitude_range),
+                      unlist(ml_summaries$bordering_language_richness),
+                      stringsAsFactors = FALSE)
+colnames(ml_data) <- c("BIC", "logLik", "MSE", predictors)
+# Sort based on increasing BIC
+ml_data <- ml_data[order(ml_data$BIC), ]
+# Save output
+write.csv(ml_data, file = "output/anderson/ml_data.csv", row.names=FALSE)

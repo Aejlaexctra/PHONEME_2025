@@ -2,3 +2,5 @@ data/
 .Rproj.user
 .Rhistory
 .RData
+/output
+/output
