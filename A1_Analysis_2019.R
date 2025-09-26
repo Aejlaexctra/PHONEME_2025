@@ -64,6 +64,8 @@ p.res <- sbplx(c(0.5, 0.5, 0.5),
                spmatrix=spmatrix,phylomatrix=phylomatrix,
                lower=c(0,0,0),upper=c(1,1,1),
                nl.info = TRUE)
+# Save p.res
+save(p.res, file = "output/A1/ml_p_res.RData")
 
 # --- Maximum likelihood fits for all models ---
 ml_model <- ml_fit(p=p.res$par,formula=models[[1]],data=A1,spmatrix=spmatrix,phylomatrix=phylomatrix)

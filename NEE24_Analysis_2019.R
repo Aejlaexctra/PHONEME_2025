@@ -101,6 +101,8 @@ p.res <- sbplx(c(0.5, 0.5, 0.5),
                spmatrix=spmatrix,phylomatrix=phylomatrix,
                lower=c(0,0,0),upper=c(1,1,1),
                nl.info = TRUE)
+# Save p.res
+save(p.res, file = "output/NEE24/ml_p_res.RData")
 
 # --- Maximum likelihood fits for all models ---
 ml_fits <- mclapply(
@@ -130,7 +132,7 @@ for (i in 1:n){
   if(dim(ml_summary$tTable)[1] == 1) {
     ml_logLik <- c(ml_logLik, ml_summary$logLik)
     ml_BIC <- c(ml_BIC, ml_summary$BIC)
-    ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(nee24)[1])
+    ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(NEE24)[1])
     next
   }
   # Get coefficient values
@@ -152,7 +154,7 @@ for (i in 1:n){
   # Add BIC, logLik and MLE
   ml_logLik <- c(ml_logLik, ml_summary$logLik)
   ml_BIC <- c(ml_BIC, ml_summary$BIC)
-  ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(nee24)[1])
+  ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(NEE24)[1])
 }
 
 # Create new data frame from lists
