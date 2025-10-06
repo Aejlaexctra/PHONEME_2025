@@ -9,13 +9,20 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(ggplot2)
+library(reshape2)
+```
+
 # Preview data and matrices
 
 ```{r}
-nee24 <- read.csv("output/nee24/nee24_adjusted.csv")
-load("output/nee24/phylomatrix.RData")
-load("output/nee24/spmatrix.RData")
-ml_data <- read.csv("output/nee24/ml_data.csv")
+nee24 <- read.csv("output/NEE24/nee24_adjusted.csv")
+load("output/NEE24/phylomatrix.RData")
+load("output/NEE24/spmatrix.RData")
+readRDS("output/NEE24/ml_fits.RDS")
+load("output/NEE24/mat.RData")
+ml_data <- read.csv("output/NEE24/ml_data.csv")
 ```
 
 ## nee24 (4) Dataset
@@ -39,6 +46,14 @@ print(spmatrix[1:6,1:6])
 print(dim(phylomatrix))
 paste("Is symmetric? ", isSymmetric(phylomatrix))
 print(phylomatrix[1:6,1:6])
+```
+
+## Covariance Matrix
+
+```{r}
+mat_df <- melt(mat)
+ggplot(mat_df, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile()
 ```
 
 # Variable Table
