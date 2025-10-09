@@ -1,6 +1,7 @@
 library(nloptr)
 library(nlme)
 library(parallel)
+library(ggplot2)
 
 # --- Setting random seed ---
 set.seed(42)
@@ -105,9 +106,15 @@ A2$altitude_range <- log(A2$altitude_range + 0.5)
 A2$L1_pop <- log(A2$L1_pop + 0.5)
 A2$bordering_language_richness <- log(A2$bordering_language_richness + 0.5)
 
-# Preview transformed data
+# --- Preview transformed data ---
 head(A2)
 summary(A2)
+
+# --- Ordinary Least Squares ---
+l1 <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A2)
+print(summary(l1))
+print(BIC(l1))
+print(logLik(l1))
 
 # --- Preview correlations ---
 pairs(A2[,

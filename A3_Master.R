@@ -18,113 +18,117 @@ spmatrix <- as.matrix(spmatrix)
 nee24 <- read.csv("data/Islands are engines of language diversity data.csv",
                   stringsAsFactors = FALSE)
 
-# Remove all NA entries
+# --- Loading NEE22 (3) ---
+nee22 <- read.csv("data/Global predictors of language endangerment and the future of linguistic diversity Data 2.csv",
+                  stringsAsFactors = FALSE)
+
+# --- Preview NEE24 ---
 paste("Size of initial dataset:", dim(nee24)[1])
 paste("#Island_Endemic: ", sum(nee24$Island.Endemic))
 paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)[1])
-old_nee24 <- nee24
-nee24 <- na.omit(nee24) 
-paste("Number of incomplete (NA) language entries removed:", 
-      dim(old_nee24)[1] - dim(nee24)[1])
-paste("Size of dataset with NA remove:", dim(nee24)[1])
-paste("#Island_Endemic: ", sum(nee24$Island.Endemic))
-paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)[1])
-# Convert variable types
-nee24$Island.Endemic <- as.numeric(nee24$Island.Endemic)
-# Rename predictors
-colnames(nee24)[colnames(nee24) == "L1.Population"] <- "L1_pop"
 
-# --- Adjusting nee24 data with matrices ---
+# --- Prepare dataset ---
+# Merge datasets
+A3 <- merge(nee22[, c("ISO", "region", "bordering_language_richness")], 
+            nee24[, c("ISO693.3", "L1.Population","Phoneme.Inventory.Size", "Island.Endemic", 
+                      "Distance.to.Mainland", "Distance.to.Continent", "Range.Size..km2.")], 
+              by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
+colnames(A3)[colnames(A3) == "L1.Population"] <- "L1_pop"
+# Remove all NA entries
+A3 <- na.omit(A3) 
+paste("Size of dataset with NA remove:", dim(A3)[1])
+paste("#Island_Endemic: ", sum(A3$Island.Endemic))
+paste("#Island_Endemic to Total Ratio: ", sum(A3$Island.Endemic) / dim(A3)[1])
+# Convert variable types
+A3$Island.Endemic <- as.numeric(A3$Island.Endemic)
+# Rename predictors
+colnames(A3)[colnames(A3) == "L1.Population"] <- "L1_pop"
+# Keep only island endemic languages
+paste("Dataset with all languages",dim(A3)[[1]])
+A3 <- A3[A3$Island.Endemic == 1,]
+paste("Dataset with only island endemic languages",dim(A3)[[1]])
+
+# --- Adjusting A3 data with matrices ---
 common_ids <- Reduce(intersect, list(
-  nee24$ISO,
+  A3$ISO,
   rownames(phylomatrix),
   rownames(spmatrix)
 ))
-nee24 <- nee24[nee24$ISO %in% common_ids, ]
+A3 <- A3[A3$IS %in% common_ids, ]
 phylomatrix <- phylomatrix[common_ids, common_ids]
 spmatrix <- spmatrix[common_ids, common_ids]
 
 # Preview and save data
-paste("Size of dataset adjusted:", dim(nee24)[1])
-paste("#Island_Endemic: ", sum(nee24$Island.Endemic))
-paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)[1])
+paste("Size of dataset adjusted:", dim(A3)[1])
+paste("#Island_Endemic: ", sum(A3$Island.Endemic))
+paste("#Island_Endemic to Total Ratio: ", sum(A3$Island.Endemic) / dim(A3)[1])
 # save data 
-write.csv(nee24, file = "output/NEE24/nee24_adjusted.csv", row.names=FALSE)
+write.csv(A3, file = "output/A3/A3_adjusted.csv", row.names=FALSE)
 
 # Preview and save matrices
 print(dim(phylomatrix))
 print(dim(spmatrix))
 print(phylomatrix[1:10,1:10])
 print(spmatrix[1:10,1:10])
-save(phylomatrix, file = "output/NEE24/phylomatrix.RData") 
-save(spmatrix, file = "output/NEE24/spmatrix.RData")
+save(phylomatrix, file = "output/A3/phylomatrix.RData") 
+save(spmatrix, file = "output/A3/spmatrix.RData")
 
 # --------
 # ANALYSIS
 # --------
 
-# Get raw NEE24 adjusted data and matrices
-raw_NEE24 <- read.csv("output/NEE24/NEE24_adjusted.csv")
-load("output/NEE24/phylomatrix.RData")
-load("output/NEE24/spmatrix.RData")
-
-# --- Resizing matrices and dataset to remove too-similar languages ---
-# phylo_dist <- dist(phylomatrix, method = "euclidean")
-# phylo_dist <- as.matrix(phylo_dist)
-# threshold <- 1.3
-# omit_lang <- which(phylo_dist < threshold & phylo_dist > 0, arr.ind = T)[,1]
-# raw_NEE24 <- raw_NEE24[-omit_lang,]
-# spmatrix <- spmatrix[-omit_lang,
-#                      -omit_lang]
-# phylomatrix <- phylomatrix[-omit_lang,
-#                            -omit_lang]
+# Get raw A3 adjusted data and matrices
+raw_A3 <- read.csv("output/A3/A3_adjusted.csv")
+load("output/A3/phylomatrix.RData")
+load("output/A3/spmatrix.RData")
 
 # --- Log transform variables ---
-NEE24 <- raw_NEE24
-NEE24$Phoneme.Inventory.Size <- log(NEE24$Phoneme.Inventory.Size) 
-NEE24$Range.Size..km2. <- log(NEE24$Range.Size..km2.)
-NEE24$L1_pop <- log(NEE24$L1_pop + 0.5)
+A3 <- raw_A3
+A3$Phoneme.Inventory.Size <- log(A3$Phoneme.Inventory.Size) 
+A3$Range.Size..km2. <- log(A3$Range.Size..km2.)
+A3$L1_pop <- log(A3$L1_pop + 0.5)
+A3$bordering_language_richness <- log(A3$bordering_language_richness + 0.5)
 # Do not transform zero entries for distance variables
-NEE24$Distance.to.Mainland[NEE24$Distance.to.Mainland != 0] <- log(
-  NEE24$Distance.to.Mainland[NEE24$Distance.to.Mainland != 0])
-NEE24$Distance.to.Continent[NEE24$Distance.to.Continent != 0] <- log(
-  NEE24$Distance.to.Continent[NEE24$Distance.to.Continent != 0])
+A3$Distance.to.Mainland[A3$Distance.to.Mainland != 0] <- log(
+  A3$Distance.to.Mainland[A3$Distance.to.Mainland != 0])
+A3$Distance.to.Continent[A3$Distance.to.Continent != 0] <- log(
+  A3$Distance.to.Continent[A3$Distance.to.Continent != 0])
 
 # --- Preview transformed data ---
-head(NEE24)
-summary(NEE24)
+head(A3)
+summary(A3)
 # PIS ~ Range_Size, Grouping by Island Endemics
-PIS_Range <- ggplot(data = NEE24,aes(x = Range.Size..km2., y = Phoneme.Inventory.Size, colour = as.logical(Island.Endemic))) +
-  geom_point() + 
-  guides(colour = guide_legend(title = "Island Endemic"))
+PIS_Range <- ggplot(data = A3,aes(x = Range.Size..km2., y = Phoneme.Inventory.Size)) +
+  geom_point()
 print(PIS_Range)
 ggsave(
-  filename = "output/NEE24//PIS_Range.png",
+  filename = "output/A3/PIS_Range.png",
   plot = PIS_Range,
   scale = 1,
   width=7,
   height=5
 )
 
-# # --- Testing GLS (2) ---
+# --- Testing GLS (2) ---
 # p = c(0.5,0.5,0.5)
 # spmatrix_test <- spmatrix/max(spmatrix)
 # spmatrix_test <- exp(-(spmatrix_test/p[2])^2)
 # mat <- as.matrix((p[3]*(1-p[1])*spmatrix_test+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1])))
-# res <- gls(model=Phoneme.Inventory.Size~1,data=NEE24,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML")
+# res <- gls(model=Phoneme.Inventory.Size~1,data=A3,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML")
 # print(-res$logLik)
 
-# # --- Preview correlations ---
-# pairs(NEE24[,
-#             c("Phoneme.Inventory.Size", "Range.Size..km2.",
-#               "L1.Population", "Distance.to.Mainland", "Distance.to.Continent")],
-#       panel = function(x, y, ...) {
-#         points(x, y, cex = 0.1, ...) # cex = 0.5 makes points half the default size
-#       })
-# cor(NEE24[,
-#           c("Phoneme.Inventory.Size", "Range.Size..km2.",
-#             "L1.Population", "Distance.to.Mainland", "Distance.to.Continent")])
-# cor.test(NEE24$Phoneme.Inventory.Size,NEE24$Island.Endemic)
+# --- Preview correlations ---
+pairs(A3[,
+         c("Range.Size..km2.",
+           "Distance.to.Mainland", "Distance.to.Continent",
+           "L1_pop", "bordering_language_richness")],
+      panel = function(x, y, ...) {
+        points(x, y, cex = 0.1, ...) # cex = 0.5 makes points half the default size
+      })
+cor(A3[,
+       c("Range.Size..km2.",
+         "Distance.to.Mainland", "Distance.to.Continent",
+         "L1_pop", "bordering_language_richness")])
 
 # --- GLS (2) Setup ---
 best_p <- function (p,formula,data,spmatrix,phylomatrix) {
@@ -149,9 +153,9 @@ ml_fit <- function (p,formula,data,spmatrix,phylomatrix) {
 }
 
 # --- Model predictor combinations ---
-predictors <- c("Island.Endemic", "Range.Size..km2.",
+predictors <- c("Range.Size..km2.",
                 "Distance.to.Mainland", "Distance.to.Continent",
-                "L1_pop")
+                "L1_pop", "bordering_language_richness")
 response <- "Phoneme.Inventory.Size"
 n_pred <- length(predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(predictors, x))
@@ -165,18 +169,17 @@ for (i in 1:n_pred) {
     models <- c(models,model)
   }
 }
-unlist(models)
 
 # --- Best p values for all models ---
 p.res <- sbplx(c(0.5, 0.5, 0.5),
                best_p,
                formula=Phoneme.Inventory.Size~1,
-               data=NEE24,
+               data=A3,
                spmatrix=spmatrix,phylomatrix=phylomatrix,
                lower=c(0,0,0),upper=c(1,1,1),
                nl.info = TRUE)
 # Save p.res and covariance matrix
-save(p.res, file = "output/NEE24/ml_p_res.RData")
+save(p.res, file = "output/A3/ml_p_res.RData")
 spmatrix_temp <- spmatrix/max(spmatrix)
 spmatrix_temp <- exp(-(spmatrix_temp/p.res$par[2])^2)
 mat <- as.matrix((p.res$par[3]*(1-p.res$par[1])*spmatrix_temp+(1-p.res$par[1])*(1-p.res$par[3])*phylomatrix+p.res$par[1]*diag(dim(phylomatrix)[1])))
@@ -184,16 +187,16 @@ mat <- as.matrix((p.res$par[3]*(1-p.res$par[1])*spmatrix_temp+(1-p.res$par[1])*(
 # --- Maximum likelihood fits for all models ---
 ml_fits <- mclapply(
   X = models,
-  FUN = function(f) ml_fit(p=p.res$par,formula=f,data=NEE24,spmatrix=spmatrix,phylomatrix=phylomatrix),
+  FUN = function(f) ml_fit(p=p.res$par,formula=f,data=A3,spmatrix=spmatrix,phylomatrix=phylomatrix),
   mc.cores = 8
 )
 # Save models
-saveRDS(ml_fits, "output/NEE24/ml_fits.RDS") 
+saveRDS(ml_fits, "output/A3/ml_fits.RDS") 
 
 # --- Model Comparison ---
 # Make empty NA list of coefficients and their respective p values in tuple form
 n <- length(ml_fits)
-ml_summaries <- list("Island.Endemic" = as.list(rep(NA,n)),
+ml_summaries <- list("bordering_language_richness" = as.list(rep(NA,n)),
                      "Range.Size..km2." = as.list(rep(NA,n)),
                      "Distance.to.Mainland" = as.list(rep(NA,n)), 
                      "Distance.to.Continent" = as.list(rep(NA,n)),
@@ -209,7 +212,7 @@ for (i in 1:n){
   if(dim(ml_summary$tTable)[1] == 1) {
     ml_logLik <- c(ml_logLik, ml_summary$logLik)
     ml_BIC <- c(ml_BIC, ml_summary$BIC)
-    ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(NEE24)[1])
+    ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(A3)[1])
     next
   }
   # Get coefficient values
@@ -231,14 +234,14 @@ for (i in 1:n){
   # Add BIC, logLik and MLE
   ml_logLik <- c(ml_logLik, ml_summary$logLik)
   ml_BIC <- c(ml_BIC, ml_summary$BIC)
-  ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(NEE24)[1])
+  ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(A3)[1])
 }
 
 # Create new data frame from lists
 ml_data <- data.frame(BIC = ml_BIC,
                       logLik = ml_logLik,
                       MSE = ml_MSE,
-                      unlist(ml_summaries$Island.Endemic),
+                      unlist(ml_summaries$bordering_language_richness),
                       unlist(ml_summaries$Range.Size..km2.),
                       unlist(ml_summaries$Distance.to.Mainland),
                       unlist(ml_summaries$Distance.to.Continent),
@@ -251,7 +254,7 @@ ml_data <- ml_data[order(ml_data$BIC), ]
 min_BIC <-  min(ml_data$BIC)
 ml_data$deltaBIC <- ml_data$BIC - min_BIC
 # Save output
-write.csv(ml_data, file = "output/NEE24/ml_data.csv", row.names=FALSE)
+write.csv(ml_data, file = "output/A3/ml_data.csv", row.names=FALSE)
 
 # --- References ---
 #
