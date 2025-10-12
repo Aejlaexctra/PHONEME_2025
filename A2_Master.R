@@ -109,6 +109,9 @@ A2$bordering_language_richness <- log(A2$bordering_language_richness + 0.5)
 # --- Preview transformed data ---
 head(A2)
 summary(A2)
+PIS_Island <- ggplot(data = A2, aes(x = as.factor(Island.Endemic), y = Phoneme.Inventory.Size)) +
+  geom_boxplot()
+print(PIS_Island)
 
 # --- Ordinary Least Squares ---
 l1 <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A2)
