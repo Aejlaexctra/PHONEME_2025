@@ -1,4 +1,5 @@
 library(nloptr)
+library(ggplot2)
 library(nlme)
 library(parallel)
 
@@ -155,8 +156,7 @@ predictors <- c("Island.Endemic", "Range.Size..km2.",
 response <- "Phoneme.Inventory.Size"
 n_pred <- length(predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(predictors, x))
-# models <- c(Phoneme.Inventory.Size~1)
-models <- c()
+models <- c(Phoneme.Inventory.Size~1)
 for (i in 1:n_pred) {
   #print(pred_combs[[i]])
   for (j in 1:dim(pred_combs[[i]])[2]) {

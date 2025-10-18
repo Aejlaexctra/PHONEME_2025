@@ -57,7 +57,7 @@ summary(phoible)
 ## Merging Datasets
 data <- merge(
   nee22[, 
-        c("ISO", "L1_pop", "region")],
+        c("ISO", "L1_pop", "region", "island")],
   phoible[, c("ISO639P3code", "Glottocode", "Latitude", "Longitude", "Phoneme.Inventory.Size")], by.x = "ISO", by.y = "ISO639P3code", all.x = TRUE)
 
 # --- Data Cleanup ---
@@ -139,8 +139,23 @@ head(A1)
 summary(A1)
 
 # --- Preview correlations ---
-plot(Phoneme.Inventory.Size ~ L1_pop,data=A1)
+# Plot data
+region_order <- c("Oceania", "Australia and New Zealand", 
+                  "Southern Asia", "South-Eastern Asia", "Asia", 
+                  "Europe", "North Africa and Arabia", "Africa", 
+                  "Western Africa", "Northern America", "Central America", "South America")
 
+phoneme_L1_scatter = ggplot(A1, aes(x = L1_pop, y = Phoneme.Inventory.Size, color = factor(region, levels = region_order))) + 
+  geom_point() + 
+  # stat_ellipse(geom = "polygon", alpha = 0.2, aes(fill = group)) + 
+  labs(x = "L1_pop", y = "Phoneme.Inventory.Size", color = "Region") + # title = "Phoneme Count ~ L1 Population Size Scatterplot",  
+  theme_minimal()
+# theme(legend.position = "none") + # Hide the legend for now, often too many groups
+# Save graph
+ggsave("output/A1/phoneme_to_L1_scatter.png", plot = phoneme_L1_scatter, width = 15, height = 10, dpi = 100,scale = 0.5)
+
+# Show graph
+print(phoneme_L1_scatter)
 # --- Ordinary Least Squares ---
 l1 <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A1)
 print(summary(l1))

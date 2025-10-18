@@ -29,80 +29,80 @@ paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)
 
 # --- Prepare dataset ---
 # Merge datasets
-A3 <- merge(nee22[, c("ISO", "region", "bordering_language_richness")], 
+A3b <- merge(nee22[, c("ISO", "region", "bordering_language_richness")], 
             nee24[, c("ISO693.3", "L1.Population","Phoneme.Inventory.Size", "Island.Endemic", 
                       "Distance.to.Mainland", "Distance.to.Continent", "Range.Size..km2.")], 
               by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
-colnames(A3)[colnames(A3) == "L1.Population"] <- "L1_pop"
+colnames(A3b)[colnames(A3b) == "L1.Population"] <- "L1_pop"
 # Remove all NA entries
-A3 <- na.omit(A3) 
-paste("Size of dataset with NA remove:", dim(A3)[1])
-paste("#Island_Endemic: ", sum(A3$Island.Endemic))
-paste("#Island_Endemic to Total Ratio: ", sum(A3$Island.Endemic) / dim(A3)[1])
+A3b <- na.omit(A3b) 
+paste("Size of dataset with NA remove:", dim(A3b)[1])
+paste("#Island_Endemic: ", sum(A3b$Island.Endemic))
+paste("#Island_Endemic to Total Ratio: ", sum(A3b$Island.Endemic) / dim(A3b)[1])
 # Convert variable types
-A3$Island.Endemic <- as.numeric(A3$Island.Endemic)
+A3b$Island.Endemic <- as.numeric(A3b$Island.Endemic)
 # Rename predictors
-colnames(A3)[colnames(A3) == "L1.Population"] <- "L1_pop"
+colnames(A3b)[colnames(A3b) == "L1.Population"] <- "L1_pop"
 # Keep only island endemic languages
-paste("Dataset with all languages",dim(A3)[[1]])
-A3 <- A3[A3$Island.Endemic == 1,]
-paste("Dataset with only island endemic languages",dim(A3)[[1]])
+paste("Dataset with all languages",dim(A3b)[[1]])
+A3b <- A3b[A3b$Island.Endemic == 1,]
+paste("Dataset with only island endemic languages",dim(A3b)[[1]])
 
-# --- Adjusting A3 data with matrices ---
+# --- Adjusting A3b data with matrices ---
 common_ids <- Reduce(intersect, list(
-  A3$ISO,
+  A3b$ISO,
   rownames(phylomatrix),
   rownames(spmatrix)
 ))
-A3 <- A3[A3$ISO %in% common_ids, ]
+A3b <- A3b[A3b$ISO %in% common_ids, ]
 phylomatrix <- phylomatrix[common_ids, common_ids]
 spmatrix <- spmatrix[common_ids, common_ids]
 
 # Preview and save data
-paste("Size of dataset adjusted:", dim(A3)[1])
-paste("#Island_Endemic: ", sum(A3$Island.Endemic))
-paste("#Island_Endemic to Total Ratio: ", sum(A3$Island.Endemic) / dim(A3)[1])
+paste("Size of dataset adjusted:", dim(A3b)[1])
+paste("#Island_Endemic: ", sum(A3b$Island.Endemic))
+paste("#Island_Endemic to Total Ratio: ", sum(A3b$Island.Endemic) / dim(A3b)[1])
 # save data 
-write.csv(A3, file = "output/A3/A3_adjusted.csv", row.names=FALSE)
+write.csv(A3b, file = "output/A3b/A3b_adjusted.csv", row.names=FALSE)
 
 # Preview and save matrices
 print(dim(phylomatrix))
 print(dim(spmatrix))
 print(phylomatrix[1:10,1:10])
 print(spmatrix[1:10,1:10])
-save(phylomatrix, file = "output/A3/phylomatrix.RData") 
-save(spmatrix, file = "output/A3/spmatrix.RData")
+save(phylomatrix, file = "output/A3b/phylomatrix.RData") 
+save(spmatrix, file = "output/A3b/spmatrix.RData")
 
 # --------
 # ANALYSIS
 # --------
 
-# Get raw A3 adjusted data and matrices
-raw_A3 <- read.csv("output/A3/A3_adjusted.csv")
-load("output/A3/phylomatrix.RData")
-load("output/A3/spmatrix.RData")
+# Get raw A3b adjusted data and matrices
+raw_A3b <- read.csv("output/A3b/A3b_adjusted.csv")
+load("output/A3b/phylomatrix.RData")
+load("output/A3b/spmatrix.RData")
 
 # --- Log transform variables ---
-A3 <- raw_A3
-A3$Phoneme.Inventory.Size <- log(A3$Phoneme.Inventory.Size) 
-A3$Range.Size..km2. <- log(A3$Range.Size..km2.)
-A3$L1_pop <- log(A3$L1_pop + 0.5)
-A3$bordering_language_richness <- log(A3$bordering_language_richness + 0.5)
+A3b <- raw_A3b
+A3b$Phoneme.Inventory.Size <- log(A3b$Phoneme.Inventory.Size) 
+A3b$Range.Size..km2. <- log(A3b$Range.Size..km2.)
+A3b$L1_pop <- log(A3b$L1_pop + 0.5)
+A3b$bordering_language_richness <- log(A3b$bordering_language_richness + 0.5)
 # Do not transform zero entries for distance variables
-A3$Distance.to.Mainland[A3$Distance.to.Mainland != 0] <- log(
-  A3$Distance.to.Mainland[A3$Distance.to.Mainland != 0])
-A3$Distance.to.Continent[A3$Distance.to.Continent != 0] <- log(
-  A3$Distance.to.Continent[A3$Distance.to.Continent != 0])
+A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0] <- log(
+  A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0])
+A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0] <- log(
+  A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0])
 
 # --- Preview transformed data ---
-head(A3)
-summary(A3)
+head(A3b)
+summary(A3b)
 # PIS ~ Range_Size, Grouping by Island Endemics
-PIS_Range <- ggplot(data = A3,aes(x = Range.Size..km2., y = Phoneme.Inventory.Size)) +
+PIS_Range <- ggplot(data = A3b,aes(x = Range.Size..km2., y = Phoneme.Inventory.Size)) +
   geom_point()
 print(PIS_Range)
 ggsave(
-  filename = "output/A3/PIS_Range.png",
+  filename = "output/A3b/PIS_Range.png",
   plot = PIS_Range,
   scale = 1,
   width=7,
@@ -114,18 +114,18 @@ ggsave(
 # spmatrix_test <- spmatrix/max(spmatrix)
 # spmatrix_test <- exp(-(spmatrix_test/p[2])^2)
 # mat <- as.matrix((p[3]*(1-p[1])*spmatrix_test+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1])))
-# res <- gls(model=Phoneme.Inventory.Size~1,data=A3,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML")
+# res <- gls(model=Phoneme.Inventory.Size~1,data=A3b,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML")
 # print(-res$logLik)
 
 # --- Preview correlations ---
-pairs(A3[,
+pairs(A3b[,
          c("Range.Size..km2.",
            "Distance.to.Mainland", "Distance.to.Continent",
            "L1_pop", "bordering_language_richness")],
       panel = function(x, y, ...) {
         points(x, y, cex = 0.1, ...) # cex = 0.5 makes points half the default size
       })
-cor(A3[,
+cor(A3b[,
        c("Range.Size..km2.",
          "Distance.to.Mainland", "Distance.to.Continent",
          "L1_pop", "bordering_language_richness")])
@@ -159,8 +159,7 @@ predictors <- c("Range.Size..km2.",
 response <- "Phoneme.Inventory.Size"
 n_pred <- length(predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(predictors, x))
-# models <- c(Phoneme.Inventory.Size~1)
-models <- c()
+models <- c(Phoneme.Inventory.Size~1)
 for (i in 1:n_pred) {
   #print(pred_combs[[i]])
   for (j in 1:dim(pred_combs[[i]])[2]) {
@@ -174,12 +173,12 @@ for (i in 1:n_pred) {
 p.res <- sbplx(c(0.5, 0.5, 0.5),
                best_p,
                formula=Phoneme.Inventory.Size~1,
-               data=A3,
+               data=A3b,
                spmatrix=spmatrix,phylomatrix=phylomatrix,
                lower=c(0,0,0),upper=c(1,1,1),
                nl.info = TRUE)
 # Save p.res and covariance matrix
-save(p.res, file = "output/A3/ml_p_res.RData")
+save(p.res, file = "output/A3b/ml_p_res.RData")
 spmatrix_temp <- spmatrix/max(spmatrix)
 spmatrix_temp <- exp(-(spmatrix_temp/p.res$par[2])^2)
 mat <- as.matrix((p.res$par[3]*(1-p.res$par[1])*spmatrix_temp+(1-p.res$par[1])*(1-p.res$par[3])*phylomatrix+p.res$par[1]*diag(dim(phylomatrix)[1])))
@@ -187,11 +186,11 @@ mat <- as.matrix((p.res$par[3]*(1-p.res$par[1])*spmatrix_temp+(1-p.res$par[1])*(
 # --- Maximum likelihood fits for all models ---
 ml_fits <- mclapply(
   X = models,
-  FUN = function(f) ml_fit(p=p.res$par,formula=f,data=A3,spmatrix=spmatrix,phylomatrix=phylomatrix),
+  FUN = function(f) ml_fit(p=p.res$par,formula=f,data=A3b,spmatrix=spmatrix,phylomatrix=phylomatrix),
   mc.cores = 8
 )
 # Save models
-saveRDS(ml_fits, "output/A3/ml_fits.RDS") 
+saveRDS(ml_fits, "output/A3b/ml_fits.RDS") 
 
 # --- Model Comparison ---
 # Make empty NA list of coefficients and their respective p values in tuple form
@@ -212,7 +211,7 @@ for (i in 1:n){
   if(dim(ml_summary$tTable)[1] == 1) {
     ml_logLik <- c(ml_logLik, ml_summary$logLik)
     ml_BIC <- c(ml_BIC, ml_summary$BIC)
-    ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(A3)[1])
+    ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(A3b)[1])
     next
   }
   # Get coefficient values
@@ -234,7 +233,7 @@ for (i in 1:n){
   # Add BIC, logLik and MLE
   ml_logLik <- c(ml_logLik, ml_summary$logLik)
   ml_BIC <- c(ml_BIC, ml_summary$BIC)
-  ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(A3)[1])
+  ml_MSE <- c(ml_MSE, sum(ml_fits[[i]]$residuals**2)/dim(A3b)[1])
 }
 
 # Create new data frame from lists
@@ -254,7 +253,7 @@ ml_data <- ml_data[order(ml_data$BIC), ]
 min_BIC <-  min(ml_data$BIC)
 ml_data$deltaBIC <- ml_data$BIC - min_BIC
 # Save output
-write.csv(ml_data, file = "output/A3/ml_data.csv", row.names=FALSE)
+write.csv(ml_data, file = "output/A3b/ml_data.csv", row.names=FALSE)
 
 # --- References ---
 #
