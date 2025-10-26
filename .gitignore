@@ -4,3 +4,4 @@ data/
 .RData
 /output
 /output
+.DS_Store
