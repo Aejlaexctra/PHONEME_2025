@@ -1,4 +1,5 @@
 library(nloptr)
+library(ggplot2)
 library(nlme)
 library(parallel)
 
@@ -79,7 +80,6 @@ load("output/NEE24/spmatrix.RData")
 # phylomatrix <- phylomatrix[-omit_lang,
 #                            -omit_lang]
 
-
 # --- Log transform variables ---
 NEE24 <- raw_NEE24
 NEE24$Phoneme.Inventory.Size <- log(NEE24$Phoneme.Inventory.Size) 
@@ -91,9 +91,21 @@ NEE24$Distance.to.Mainland[NEE24$Distance.to.Mainland != 0] <- log(
 NEE24$Distance.to.Continent[NEE24$Distance.to.Continent != 0] <- log(
   NEE24$Distance.to.Continent[NEE24$Distance.to.Continent != 0])
 
-# Preview transformed data
+# --- Preview transformed data ---
 head(NEE24)
 summary(NEE24)
+# PIS ~ Range_Size, Grouping by Island Endemics
+PIS_Range <- ggplot(data = NEE24,aes(x = Range.Size..km2., y = Phoneme.Inventory.Size, colour = as.logical(Island.Endemic))) +
+  geom_point() + 
+  guides(colour = guide_legend(title = "Island Endemic"))
+print(PIS_Range)
+ggsave(
+  filename = "output/NEE24//PIS_Range.png",
+  plot = PIS_Range,
+  scale = 1,
+  width=7,
+  height=5
+)
 
 # # --- Testing GLS (2) ---
 # p = c(0.5,0.5,0.5)
@@ -144,8 +156,7 @@ predictors <- c("Island.Endemic", "Range.Size..km2.",
 response <- "Phoneme.Inventory.Size"
 n_pred <- length(predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(predictors, x))
-# models <- c(Phoneme.Inventory.Size~1)
-models <- c()
+models <- c(Phoneme.Inventory.Size~1)
 for (i in 1:n_pred) {
   #print(pred_combs[[i]])
   for (j in 1:dim(pred_combs[[i]])[2]) {

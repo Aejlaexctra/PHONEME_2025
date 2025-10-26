@@ -1,6 +1,7 @@
 library(nloptr)
 library(nlme)
 library(parallel)
+library(ggplot2)
 
 # --- Setting random seed ---
 set.seed(42)
@@ -41,6 +42,7 @@ phoible <- merge(
 print("Duplicate Glottocode entries:")
 glotto_duplicates <- duplicated(phoible$Glottocode)
 print(phoible$Glottocode[glotto_duplicates])
+print(unique(phoible$Glottocode[glotto_duplicates]))
 phoible <- phoible[!unlist(glotto_duplicates),]
 print("Size of dataset after duplicates removed:")
 print(dim(phoible)[1])
@@ -55,7 +57,7 @@ summary(phoible)
 ## Merging Datasets
 data <- merge(
   nee22[, 
-        c("ISO", "L1_pop", "region")],
+        c("ISO", "L1_pop", "region", "island")],
   phoible[, c("ISO639P3code", "Glottocode", "Latitude", "Longitude", "Phoneme.Inventory.Size")], by.x = "ISO", by.y = "ISO639P3code", all.x = TRUE)
 
 # --- Data Cleanup ---
@@ -68,9 +70,9 @@ print("Size of dataset with NA removed:")
 print(dim(data)[1])
 # Remove iso duplicate entries
 print("Duplicate iso entries:")
-iso_duplicates <- duplicated(data$ISO)
-print(data$ISO[iso_duplicates])
-data <- data[!unlist(iso_duplicates),]
+iso_duplicates <- which(table(data$ISO) != 1)
+print(which(table(data$ISO) != 1))
+data <- data[!(data$ISO %in% names(which(table(data$ISO) != 1))),]
 print("Size of dataset after duplicates removed:")
 print(dim(data[1]))
 
@@ -102,30 +104,71 @@ save(spmatrix, file = "output/A1/spmatrix.RData")
 # ANALYSIS
 # --------
 
-# Get raw A1 adjusted data and matrices
+# --- Get raw A1 adjusted data and matrices ---
 raw_A1 <- read.csv("output/A1/A1_adjusted.csv")
 load("output/A1/phylomatrix.RData")
 load("output/A1/spmatrix.RData")
+
+# --- Preview raw data ---
+head(raw_A1)
+summary(raw_A1)
+# Phoneme Inventory Size distribution
+PIS_hist <- ggplot(raw_A1, aes(x = Phoneme.Inventory.Size)) +
+  geom_histogram() +
+  labs(
+    y = "Number of Languages Observed",
+    x = "Phoneme.Inventory.Size",
+  ) + 
+  scale_x_continuous(n.breaks = 15) +
+  scale_y_continuous(n.breaks = 15)
+  
+ggsave(
+  filename = "output/A1/PIS_hist.png",
+  plot = PIS_hist,
+  scale = 1
+)
+print(PIS_hist)
 
 # --- Log transform variables ---
 A1 <- raw_A1
 A1$Phoneme.Inventory.Size <- log(A1$Phoneme.Inventory.Size) 
 A1$L1_pop <- log(A1$L1_pop + 0.5)
 
-# Preview transformed data
+# --- Preview transformed data ---
 head(A1)
 summary(A1)
 
 # --- Preview correlations ---
-plot(Phoneme.Inventory.Size ~ L1_pop,data=A1)
+# Plot data
+region_order <- c("Oceania", "Australia and New Zealand", 
+                  "Southern Asia", "South-Eastern Asia", "Asia", 
+                  "Europe", "North Africa and Arabia", "Africa", 
+                  "Western Africa", "Northern America", "Central America", "South America")
+
+phoneme_L1_scatter = ggplot(A1, aes(x = L1_pop, y = Phoneme.Inventory.Size, color = factor(region, levels = region_order))) + 
+  geom_point() + 
+  # stat_ellipse(geom = "polygon", alpha = 0.2, aes(fill = group)) + 
+  labs(x = "L1_pop", y = "Phoneme.Inventory.Size", color = "Region") + # title = "Phoneme Count ~ L1 Population Size Scatterplot",  
+  theme_minimal()
+# theme(legend.position = "none") + # Hide the legend for now, often too many groups
+# Save graph
+ggsave("output/A1/phoneme_to_L1_scatter.png", plot = phoneme_L1_scatter, width = 15, height = 10, dpi = 100,scale = 0.5)
+
+# Show graph
+print(phoneme_L1_scatter)
+# --- Ordinary Least Squares ---
+l1 <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A1)
+print(summary(l1))
+print(BIC(l1))
+print(logLik(l1))
 
 # --- Testing GLS (2) ---
-p = c(0.5,0.5,0.5)
-spmatrix_test <- spmatrix/max(spmatrix)
-spmatrix_test <- exp(-(spmatrix_test/p[2])^2)
-mat <- as.matrix((p[3]*(1-p[1])*spmatrix_test+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1])))
-res <- gls(model=Phoneme.Inventory.Size~1,data=A1,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML")
-print(-res$logLik)
+# p = c(0.5,0.5,0.5)
+# spmatrix_test <- spmatrix/max(spmatrix)
+# spmatrix_test <- exp(-(spmatrix_test/p[2])^2)
+# mat <- as.matrix((p[3]*(1-p[1])*spmatrix_test+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1])))
+# res <- gls(model=Phoneme.Inventory.Size~1,data=A1,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML")
+# print(-res$logLik)
 
 # --- GLS (2) Setup ---
 best_p <- function (p,formula,data,spmatrix,phylomatrix) {
@@ -149,7 +192,7 @@ ml_fit <- function (p,formula,data,spmatrix,phylomatrix) {
   res
 }
 
-## Model predictor combinations
+# --- Model predictor combinations ---
 predictors <- c("L1_pop")
 models <- c(Phoneme.Inventory.Size ~ L1_pop)
 
