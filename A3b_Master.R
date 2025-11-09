@@ -1,6 +1,7 @@
 library(nloptr)
 library(nlme)
 library(parallel)
+library(ggplot2)
 
 # --- Loading Phylogenetic, Spatial Distance and Contact Matrices ---
 phylomatrix <- read.csv("data/distance_matrices/phylogenetic_covariance_matrix.csv",
@@ -29,11 +30,10 @@ paste("#Island_Endemic to Total Ratio: ", sum(nee24$Island.Endemic) / dim(nee24)
 
 # --- Prepare dataset ---
 # Merge datasets
-A3b <- merge(nee22[, c("ISO", "region", "bordering_language_richness")], 
+A3b <- merge(nee22[, c("ISO", "region","L1_pop")], 
             nee24[, c("ISO693.3", "L1.Population","Phoneme.Inventory.Size", "Island.Endemic", 
                       "Distance.to.Mainland", "Distance.to.Continent", "Range.Size..km2.")], 
               by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
-colnames(A3b)[colnames(A3b) == "L1.Population"] <- "L1_pop"
 # Remove all NA entries
 A3b <- na.omit(A3b) 
 paste("Size of dataset with NA remove:", dim(A3b)[1])
@@ -87,7 +87,6 @@ A3b <- raw_A3b
 A3b$Phoneme.Inventory.Size <- log(A3b$Phoneme.Inventory.Size) 
 A3b$Range.Size..km2. <- log(A3b$Range.Size..km2.)
 A3b$L1_pop <- log(A3b$L1_pop + 0.5)
-A3b$bordering_language_richness <- log(A3b$bordering_language_richness + 0.5)
 # Do not transform zero entries for distance variables
 A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0] <- log(
   A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0])
@@ -121,14 +120,14 @@ ggsave(
 pairs(A3b[,
          c("Range.Size..km2.",
            "Distance.to.Mainland", "Distance.to.Continent",
-           "L1_pop", "bordering_language_richness")],
+           "L1_pop")],
       panel = function(x, y, ...) {
         points(x, y, cex = 0.1, ...) # cex = 0.5 makes points half the default size
       })
 cor(A3b[,
        c("Range.Size..km2.",
          "Distance.to.Mainland", "Distance.to.Continent",
-         "L1_pop", "bordering_language_richness")])
+         "L1_pop")])
 
 # --- GLS (2) Setup ---
 best_p <- function (p,formula,data,spmatrix,phylomatrix) {
@@ -155,7 +154,7 @@ ml_fit <- function (p,formula,data,spmatrix,phylomatrix) {
 # --- Model predictor combinations ---
 predictors <- c("Range.Size..km2.",
                 "Distance.to.Mainland", "Distance.to.Continent",
-                "L1_pop", "bordering_language_richness")
+                "L1_pop")
 response <- "Phoneme.Inventory.Size"
 n_pred <- length(predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(predictors, x))
@@ -195,8 +194,7 @@ saveRDS(ml_fits, "output/A3b/ml_fits.RDS")
 # --- Model Comparison ---
 # Make empty NA list of coefficients and their respective p values in tuple form
 n <- length(ml_fits)
-ml_summaries <- list("bordering_language_richness" = as.list(rep(NA,n)),
-                     "Range.Size..km2." = as.list(rep(NA,n)),
+ml_summaries <- list("Range.Size..km2." = as.list(rep(NA,n)),
                      "Distance.to.Mainland" = as.list(rep(NA,n)), 
                      "Distance.to.Continent" = as.list(rep(NA,n)),
                      "L1_pop" = as.list(rep(NA,n)))
@@ -240,7 +238,6 @@ for (i in 1:n){
 ml_data <- data.frame(BIC = ml_BIC,
                       logLik = ml_logLik,
                       MSE = ml_MSE,
-                      unlist(ml_summaries$bordering_language_richness),
                       unlist(ml_summaries$Range.Size..km2.),
                       unlist(ml_summaries$Distance.to.Mainland),
                       unlist(ml_summaries$Distance.to.Continent),
