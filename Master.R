@@ -204,7 +204,7 @@ A3a_spmatrix <- spmatrix[common_ids, common_ids]
 
 # --- Prepare dataset ---
 # Merge datasets
-A3b <- merge(nee22[, c("ISO", "region","L1_pop")], 
+A3b <- merge(nee22[, c("ISO", "region")], 
              nee24[, c("ISO693.3", "L1_pop","Phoneme.Inventory.Size", "Island.Endemic", 
                        "Distance.to.Mainland", "Distance.to.Continent", "Range.Size..km2.")], 
              by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
