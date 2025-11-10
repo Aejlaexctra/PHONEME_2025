@@ -349,7 +349,7 @@ save(A4_phylomatrix, file = "output/A4/A4_phylomatrix.RData")
 save(A4_spmatrix, file = "output/A4/A4_spmatrix.RData")
 
 ## CLEAR ALL CURRENT VARIABLES ####
-rm(list = ls())
+# rm(list = ls())
 
 # --- (5) DATASET VISUALISATION --- ####
 
