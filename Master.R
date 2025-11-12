@@ -537,7 +537,7 @@ region_sample_diff_barplot <- ggplot(A1a_region_sample_diff_long, aes(x = factor
   geom_col(position = position_dodge(width = 0.8)) +
   labs(
     x = "Region",
-    y = "diff",
+    y = "Difference",
     fill = "Statistic Type"
   ) +
   theme_classic() +
@@ -716,7 +716,7 @@ region_sample_diff_barplot <- ggplot(A1b_region_sample_diff_long, aes(x = factor
   geom_col(position = position_dodge(width = 0.8)) +
   labs(
     x = "Region",
-    y = "diff",
+    y = "Difference",
     fill = "Statistic Type"
   ) +
   theme_classic() +
