@@ -17,8 +17,12 @@ output/.DS_Store
 .DS_Store
 output/.DS_Store
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 .DS_Store
 output/.DS_Store
+=======
+.RDataTmp1
+>>>>>>> Stashed changes
 =======
 .RDataTmp1
 >>>>>>> Stashed changes
