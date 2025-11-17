@@ -1064,9 +1064,9 @@ write.csv(A2_ml_data, file = "output/A2/A2_ml_data.csv", row.names=FALSE)
 ## --- A3a --- ####
 
 # --- Model predictor combinations ---
-A3a_predictors <- c("Range.Size..km2.",
+A3a_predictors <- c("Island.Endemic" ,"Range.Size..km2.",
                 "Distance.to.Mainland", "Distance.to.Continent",
-                "L1_pop", "bordering_language_richness")
+                "L1_pop")
 response <- "Phoneme.Inventory.Size"
 n_pred <- length(A3a_predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(A3a_predictors, x))
@@ -1107,7 +1107,7 @@ saveRDS(A3a_fits, "output/A3a/A3a_fits.RDS")
 # --- Model Comparison ---
 # Make empty NA list of coefficients and their respective p values in tuple form
 n <- length(A3a_fits)
-A3a_summaries <- list("bordering_language_richness" = as.list(rep(NA,n)),
+A3a_summaries <- list("Island.Endemic" = as.list(rep(NA,n)),
                      "Range.Size..km2." = as.list(rep(NA,n)),
                      "Distance.to.Mainland" = as.list(rep(NA,n)), 
                      "Distance.to.Continent" = as.list(rep(NA,n)),
@@ -1152,7 +1152,7 @@ for (i in 1:n){
 A3a_ml_data <- data.frame(BIC = ml_BIC,
                       logLik = ml_logLik,
                       MSE = ml_MSE,
-                      unlist(A3a_summaries$bordering_language_richness),
+                      unlist(A3a_summaries$Island.Endemic),
                       unlist(A3a_summaries$Range.Size..km2.),
                       unlist(A3a_summaries$Distance.to.Mainland),
                       unlist(A3a_summaries$Distance.to.Continent),
