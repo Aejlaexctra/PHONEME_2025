@@ -457,13 +457,11 @@ print(phoneme_L1_scatter)
 # --- Testing for region sampling bias of A1a (BUT WILL BE USED IN SECTION 4 of PAPER) ---
 # number of repetitions
 n_rep = 1e4
-# Get region names
-region_names <- region_order
 # Find number of languages in each region for A1a
 A1a_region_tally <- as.data.frame(table(A1a$region))
-A1a_region_tally <- A1a_region_tally[match(region_names, A1a_region_tally$Var1), ]
-region_sample_tallies <- data.frame(matrix(ncol = length(region_names), nrow = n_rep))
-colnames(region_sample_tallies) <- region_names # Set column names
+A1a_region_tally <- A1a_region_tally[match(region_order, A1a_region_tally$Var1), ]
+region_sample_tallies <- data.frame(matrix(ncol = length(region_order), nrow = n_rep))
+colnames(region_sample_tallies) <- region_order # Set column names
 # Repeated n_rep times, randomly sample without replacement 
 for(i in 1:n_rep){
   # Get region sample
@@ -476,16 +474,16 @@ for(i in 1:n_rep){
 # Reshape the dataframe to long format
 A1a_region_sample_tallies_long <- pivot_longer(region_sample_tallies, everything(), names_to = c("Group"), values_to = 'Value')
 # Set 'Group' as a factor with levels in the desired order, this is to ensure that ggplot doesn't alphabetically sort the regions.
-A1a_region_sample_tallies_long$Group <- factor(A1a_region_sample_tallies_long$Group, levels = region_names)
+A1a_region_sample_tallies_long$Group <- factor(A1a_region_sample_tallies_long$Group, levels = region_order)
 region_box <- ggplot(A1a_region_sample_tallies_long, aes(x = Group, y = Value)) +
   geom_boxplot(varwidth = TRUE) +
   geom_point(data = A1a_region_tally, 
-             aes(x = region_names, y = Freq), 
+             aes(x = region_order, y = Freq), 
              shape = 4,
              size = 4) + 
   geom_text(
     data = A1a_region_tally,
-    aes(x = region_names, y = Freq, label = Freq),
+    aes(x = region_order, y = Freq, label = Freq),
     vjust = 0.1,
     hjust = 1.5,
     size = 3.5
@@ -502,24 +500,28 @@ ggsave("output/A1a/region_sampling.png", plot = region_box, width = 15, height =
 print(region_box)
 
 # Show diffs between number of observed languages sampled and the median, Q1, Q4, min and max of sampled regions from NEE22 (Fig 4c)
-A1a_region_sample_diff <- data.frame(region_names, 
-                                     sapply(region_names, function(x) 
+A1a_region_sample_diff <- data.frame(region_order, 
+                                     sapply(region_order, function(x) 
                                        {median(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])}),
-                                     sapply(region_names, function(x) 
-                                       {quantile(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])[[2]]}),
-                                     sapply(region_names, function(x) 
-                                       {quantile(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])[[4]]}),
-                                     sapply(region_names, function(x) 
-                                       {min(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])}),
-                                     sapply(region_names, function(x) 
-                                       {max(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])}),
+                                     sapply(region_order, function(x) 
+                                     {quantile(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])[[2]]}),
+                                     sapply(region_order, function(x) 
+                                     {quantile(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])[[4]]}),
+                                     sapply(region_order, function(x) 
+                                     {min(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])}),
+                                     sapply(region_order, function(x) 
+                                     {max(A1a_region_sample_tallies_long$Value[A1a_region_sample_tallies_long == x])}),
+                                     sapply(region_order, function(x) 
+                                       {median(A1a$Phoneme.Inventory.Size[A1a$region == x])}),
                                      stringsAsFactors = FALSE)
-colnames(A1a_region_sample_diff) <- c("region", "median", "Q1", "Q3", "min", "max")
-A1a_region_sample_diff$`median` <- A1a_region_tally$Freq - A1a_region_sample_diff$`median`
-A1a_region_sample_diff$`Q1` <- A1a_region_tally$Freq - A1a_region_sample_diff$`Q1`
-A1a_region_sample_diff$`Q3` <- A1a_region_tally$Freq - A1a_region_sample_diff$`Q3`
-A1a_region_sample_diff$`min` <- A1a_region_tally$Freq - A1a_region_sample_diff$`min`
-A1a_region_sample_diff$`max` <- A1a_region_tally$Freq - A1a_region_sample_diff$`max`
+
+colnames(A1a_region_sample_diff) <- c("region", "median", "Q1", "Q3", "min", "max", "median_PISa")
+A1a_region_sample_diff$median <- A1a_region_tally$Freq - A1a_region_sample_diff$median
+A1a_region_sample_diff$Q1 <- A1a_region_tally$Freq - A1a_region_sample_diff$Q1
+A1a_region_sample_diff$Q3 <- A1a_region_tally$Freq - A1a_region_sample_diff$Q3
+A1a_region_sample_diff$min <- A1a_region_tally$Freq - A1a_region_sample_diff$min
+A1a_region_sample_diff$max <- A1a_region_tally$Freq - A1a_region_sample_diff$max
+
 # Make into long format
 A1a_region_sample_diff_long <- A1a_region_sample_diff %>%
   pivot_longer(
@@ -532,22 +534,15 @@ A1a_region_sample_diff_long$diff_type <- factor(
   levels = c("min", "Q1", "median", "Q3", "max"),
   labels = c("Min", "Q1", "Median", "Q3", "Max")
 )
-# Plot diffs
-region_sample_diff_barplot <- ggplot(A1a_region_sample_diff_long, aes(x = factor(region, levels = region_order), y = diff_value, fill = diff_type)) +
-  geom_col(position = position_dodge(width = 0.8)) +
-  labs(
-    x = "Region",
-    y = "Difference",
-    fill = "Statistic Type"
-  ) +
-  theme_classic() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
-    axis.text.y = element_text(size = 10),
-    axis.title = element_text(size = 12)
-  )
-ggsave("output/A1a/region_sampling_diff.png", plot = region_sample_diff_barplot, width = 15, height = 15, dpi = 300, scale = 0.5)
-print(region_sample_diff_barplot)
+
+A1a_region_sample_plot <- ggplot(data=A1a_region_sample_diff_long, aes(y=diff_value,x=median_PISa,color=diff_type)) +
+  geom_point() + 
+  labs(x = "Median PISa", y = "Sample Bias", color = "Sample Bias Type") + 
+  theme_classic()
+print(A1a_region_sample_plot)
+ggsave("output/A1a/region_sampling_diff.png",A1a_region_sample_plot)
+# Take quick OLS
+summary(lm(A1a_region_sample_diff_long$median_PISa ~ A1a_region_sample_diff_long$diff_value))
 
 # --- Phoneme.Inventory.Size across regions A1a (BUT WILL BE USED IN SECTION 4 of PAPER) ---
 box_phoneme_regions <- ggplot(raw_A1a, aes(
@@ -621,12 +616,12 @@ if(!exists("nee22")){
 # number of repetitions
 n_rep = 1e4
 # Get region names
-region_names <- region_order
+region_order <- region_order
 # Find number of languages in each region for A1b
 A1b_region_tally <- as.data.frame(table(A1b$region))
-A1b_region_tally <- A1b_region_tally[match(region_names, A1b_region_tally$Var1), ]
-region_sample_tallies <- data.frame(matrix(ncol = length(region_names), nrow = n_rep))
-colnames(region_sample_tallies) <- region_names # Set column names
+A1b_region_tally <- A1b_region_tally[match(region_order, A1b_region_tally$Var1), ]
+region_sample_tallies <- data.frame(matrix(ncol = length(region_order), nrow = n_rep))
+colnames(region_sample_tallies) <- region_order # Set column names
 # Repeated n_rep times, randomly sample without replacement 
 for(i in 1:n_rep){
   # Get region sample
@@ -639,16 +634,16 @@ for(i in 1:n_rep){
 # Reshape the dataframe to long format
 A1b_region_sample_tallies_long <- pivot_longer(region_sample_tallies, everything(), names_to = c("Group"), values_to = 'Value')
 # Set 'Group' as a factor with levels in the desired order, this is to ensure that ggplot doesn't alphabetically sort the regions.
-A1b_region_sample_tallies_long$Group <- factor(A1b_region_sample_tallies_long$Group, levels = region_names)
+A1b_region_sample_tallies_long$Group <- factor(A1b_region_sample_tallies_long$Group, levels = region_order)
 region_box <- ggplot(A1b_region_sample_tallies_long, aes(x = Group, y = Value)) +
   geom_boxplot(varwidth = TRUE) +
   geom_point(data = A1b_region_tally, 
-             aes(x = region_names, y = Freq), 
+             aes(x = region_order, y = Freq), 
              shape = 4,
              size = 4) + 
   geom_text(
     data = A1b_region_tally,
-    aes(x = region_names, y = Freq, label = Freq),
+    aes(x = region_order, y = Freq, label = Freq),
     vjust = 0.1,
     hjust = 1.4,
     size = 3
@@ -681,24 +676,28 @@ print(box_phoneme_regions)
 ggsave("output/A1b/phoneme_region_box.png", plot = box_phoneme_regions, width = 15, height = 15, dpi = 300, scale = 0.5)
 
 # Show diff between number of observed languages sampled and the median, Q1, Q4, min and max of sampled regions from NEE22 (Fig 4c)
-A1b_region_sample_diff <- data.frame(region_names, 
-                                     sapply(region_names, function(x) 
+A1b_region_sample_diff <- data.frame(region_order, 
+                                     sapply(region_order, function(x) 
                                      {median(A1b_region_sample_tallies_long$Value[A1b_region_sample_tallies_long == x])}),
-                                     sapply(region_names, function(x) 
+                                     sapply(region_order, function(x) 
                                      {quantile(A1b_region_sample_tallies_long$Value[A1b_region_sample_tallies_long == x])[[2]]}),
-                                     sapply(region_names, function(x) 
+                                     sapply(region_order, function(x) 
                                      {quantile(A1b_region_sample_tallies_long$Value[A1b_region_sample_tallies_long == x])[[4]]}),
-                                     sapply(region_names, function(x) 
+                                     sapply(region_order, function(x) 
                                      {min(A1b_region_sample_tallies_long$Value[A1b_region_sample_tallies_long == x])}),
-                                     sapply(region_names, function(x) 
+                                     sapply(region_order, function(x) 
                                      {max(A1b_region_sample_tallies_long$Value[A1b_region_sample_tallies_long == x])}),
+                                     sapply(region_order, function(x) 
+                                     {median(A1b$Phoneme.Inventory.Size[A1b$region == x])}),
                                      stringsAsFactors = FALSE)
-colnames(A1b_region_sample_diff) <- c("region", "median", "Q1", "Q3", "min", "max")
-A1b_region_sample_diff$`median` <- A1b_region_tally$Freq - A1b_region_sample_diff$`median`
-A1b_region_sample_diff$`Q1` <- A1b_region_tally$Freq - A1b_region_sample_diff$`Q1`
-A1b_region_sample_diff$`Q3` <- A1b_region_tally$Freq - A1b_region_sample_diff$`Q3`
-A1b_region_sample_diff$`min` <- A1b_region_tally$Freq - A1b_region_sample_diff$`min`
-A1b_region_sample_diff$`max` <- A1b_region_tally$Freq - A1b_region_sample_diff$`max`
+
+colnames(A1b_region_sample_diff) <- c("region", "median", "Q1", "Q3", "min", "max", "median_PISc")
+A1b_region_sample_diff$median <- A1b_region_tally$Freq - A1b_region_sample_diff$median
+A1b_region_sample_diff$Q1 <- A1b_region_tally$Freq - A1b_region_sample_diff$Q1
+A1b_region_sample_diff$Q3 <- A1b_region_tally$Freq - A1b_region_sample_diff$Q3
+A1b_region_sample_diff$min <- A1b_region_tally$Freq - A1b_region_sample_diff$min
+A1b_region_sample_diff$max <- A1b_region_tally$Freq - A1b_region_sample_diff$max
+
 # Make into long format
 A1b_region_sample_diff_long <- A1b_region_sample_diff %>%
   pivot_longer(
@@ -711,22 +710,15 @@ A1b_region_sample_diff_long$diff_type <- factor(
   levels = c("min", "Q1", "median", "Q3", "max"),
   labels = c("Min", "Q1", "Median", "Q3", "Max")
 )
-# Plot diffs
-region_sample_diff_barplot <- ggplot(A1b_region_sample_diff_long, aes(x = factor(region, levels = region_order), y = diff_value, fill = diff_type)) +
-  geom_col(position = position_dodge(width = 0.8)) +
-  labs(
-    x = "Region",
-    y = "Difference",
-    fill = "Statistic Type"
-  ) +
-  theme_classic() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
-    axis.text.y = element_text(size = 10),
-    axis.title = element_text(size = 12)
-  )
-ggsave("output/A1b/region_sampling_diff.png", plot = region_sample_diff_barplot, width = 15, height = 15, dpi = 300, scale = 0.5)
-print(region_sample_diff_barplot)
+
+A1b_region_sample_plot <- ggplot(data=A1b_region_sample_diff_long, aes(y=diff_value,x=median_PISc,color=diff_type)) +
+  geom_point() + 
+  labs(x = "Median PISc", y = "Sample Bias", color = "Sample Bias Type") + 
+  theme_classic()
+print(A1b_region_sample_plot)
+ggsave("output/A1b/region_sampling_diff.png",A1b_region_sample_plot)
+# Take quick OLS
+summary(lm(A1b_region_sample_diff_long$median_PISc ~ A1b_region_sample_diff_long$diff_value))
 
 ## --- A2 --- ####
 
@@ -784,9 +776,13 @@ A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0] <- log(
 # --- Preview transformed data ---
 head(A3a)
 summary(A3a)
-# PIS ~ Range_Size, Grouping by Island Endemics
-PIS_Range <- ggplot(data = A3a,aes(x = Range.Size..km2., y = Phoneme.Inventory.Size)) +
-  geom_point()
+
+# --- PISc ~ Range ---
+PIS_Range <- ggplot(A3a, aes(x = Range.Size..km2., y = Phoneme.Inventory.Size, color = factor(region, levels = region_order))) + 
+  geom_point() + 
+  labs(x = "Range Size", y = "PISc", color = "Region") + 
+  scale_color_manual(values = region_colours) +
+  theme_minimal()
 print(PIS_Range)
 ggsave(
   filename = "output/A3a/PIS_Range.png",
@@ -795,6 +791,11 @@ ggsave(
   width=7,
   height=5
 )
+
+# --- Get PISc ~ Range, for each region ---
+PIS_Range_Region_Cor <- sapply(region_order, function(x) {
+  cor(A3a$Range.Size..km2.[A3a$region==x], A3a$Phoneme.Inventory.Size[A3a$region==x])
+})
 
 # --- Preview correlations ---
 pairs(A3a[,
@@ -876,8 +877,11 @@ print(table(A4$documentation))
 # --- Preview correlations ---
 # PIS ~ Documentation
 PIS_Doc <- ggplot(data = A4, aes(x = as.factor(documentation), y = Phoneme.Inventory.Size)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(x = "Documentation", y = "PISc") + 
+  theme_classic()
 print(PIS_Doc)
+ggsave(filename = "output/A4/PIS_Doc.png", plot = PIS_Doc)
 
 # --- (6) OLS AND GLS ANALYSIS --- ####
 
