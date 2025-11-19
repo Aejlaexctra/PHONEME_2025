@@ -158,8 +158,8 @@ A1b_spmatrix <- spmatrix[common_ids, common_ids]
 ## Merging Datasets
 A2 <- merge(
   nee22[, 
-        c("ISO", "region", "L1_pop", "bordering_language_richness", "altitude_range", "area")],
-  nee24[, c("ISO693.3", "Phoneme.Inventory.Size", "Island.Endemic")], 
+        c("ISO", "region", "L1_pop", "bordering_language_richness", "altitude_range")],
+  nee24[, c("ISO693.3", "Phoneme.Inventory.Size", "Island.Endemic", "Range.Size..km2.")], 
   by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
 
 # --- Data Cleanup ---
@@ -730,7 +730,7 @@ load("output/A2/A2_spmatrix.RData")
 # --- Log transform variables ---
 A2 <- raw_A2
 A2$Phoneme.Inventory.Size <- log(A2$Phoneme.Inventory.Size) 
-A2$area <- log(A2$area)
+A2$Range.Size..km2. <- log(A2$Range.Size..km2.)
 A2$altitude_range <- log(A2$altitude_range + 0.5)
 A2$L1_pop <- log(A2$L1_pop + 0.5)
 A2$bordering_language_richness <- log(A2$bordering_language_richness + 0.5)
@@ -744,13 +744,13 @@ print(PIS_Island)
 
 # --- Preview correlations ---
 pairs(A2[,
-         c("Phoneme.Inventory.Size", "area", "L1_pop", 
+         c("Phoneme.Inventory.Size", "Range.Size..km2.", "L1_pop", 
            "altitude_range", "bordering_language_richness")],
       panel = function(x, y, ...) {
         points(x, y, cex = 0.1, ...) # cex = 0.5 makes points half the default size
       })
 cor(A2[,
-       c("Phoneme.Inventory.Size", "area", "L1_pop", 
+       c("Phoneme.Inventory.Size", "Range.Size..km2.", "L1_pop", 
          "altitude_range", "bordering_language_richness")])
 cor.test(A2$Phoneme.Inventory.Size,A2$Island.Endemic)
 
@@ -945,7 +945,7 @@ print(BIC(A2_l1))
 print(logLik(A2_l1))
 
 # --- Model predictor combinations ---
-A2_predictors <- c("Island.Endemic", "area",
+A2_predictors <- c("Island.Endemic", "Range.Size..km2.",
                 "altitude_range", "bordering_language_richness",
                 "L1_pop")
 response <- "Phoneme.Inventory.Size"
@@ -1006,7 +1006,7 @@ saveRDS(A2_fits, "output/A2/A2_fits.RDS")
 # Make empty NA list of coefficients and their respective p values in tuple form
 n <- length(A2_fits)
 A2_summaries <- list("Island.Endemic" = as.list(rep(NA,n)),
-                     "area" = as.list(rep(NA,n)),
+                     "Range.Size..km2." = as.list(rep(NA,n)),
                      "altitude_range" = as.list(rep(NA,n)), 
                      "bordering_language_richness" = as.list(rep(NA,n)),
                      "L1_pop" = as.list(rep(NA,n)))
@@ -1051,7 +1051,7 @@ A2_ml_data <- data.frame(BIC = ml_BIC,
                       logLik = ml_logLik,
                       MSE = ml_MSE,
                       unlist(A2_summaries$Island.Endemic),
-                      unlist(A2_summaries$area),
+                      unlist(A2_summaries$Range.Size..km2.),
                       unlist(A2_summaries$altitude_range),
                       unlist(A2_summaries$bordering_language_richness),
                       unlist(A2_summaries$L1_pop),
