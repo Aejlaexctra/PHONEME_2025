@@ -383,7 +383,9 @@ region_colours <- c("Oceania" = "#a6cee3", "Australia and New Zealand" = "#1f78b
 # Retrieve nee22 (if not already loaded)
 if(!exists("nee22")){
   nee22 <- read.csv("data/Global predictors of language endangerment and the future of linguistic diversity Data 2.csv",
-                    stringsAsFactors = FALSE) 
+                    stringsAsFactors = FALSE)
+  # Change Region "Arab" to "North Africa and Arabia"
+  nee22$region[nee22$region == "Arab"] <- "North Africa and Arabia"
 }
 
 ## --- A1a --- ####
@@ -778,21 +780,44 @@ head(A3a)
 summary(A3a)
 
 # --- PISc ~ Range ---
-PIS_Range <- ggplot(A3a, aes(x = Range.Size..km2., y = Phoneme.Inventory.Size, color = factor(region, levels = region_order))) + 
+# Regions labelled
+PIS_Range_Region <- ggplot(A3a, aes(x = Range.Size..km2., 
+                                    y = Phoneme.Inventory.Size, 
+                                    color = factor(region, levels = region_order))) + 
   geom_point() + 
   labs(x = "Range Size", y = "PISc", color = "Region") + 
   scale_color_manual(values = region_colours) +
   theme_minimal()
-print(PIS_Range)
+print(PIS_Range_Region)
 ggsave(
-  filename = "output/A3a/PIS_Range.png",
-  plot = PIS_Range,
+  filename = "output/A3a/PIS_Range_Region.png",
+  plot = PIS_Range_Region,
+  scale = 1,
+  width=7,
+  height=5
+)
+# Island
+PIS_Range_Island <- ggplot(A3a, aes(x = Range.Size..km2., 
+                                    y = Phoneme.Inventory.Size, 
+                                    color = factor(Island.Endemic))) + 
+  geom_point() + 
+  scale_color_manual(
+    values = c("0" = "#1f78b4", "1" = "#fb9a99"),
+    labels = c("0" = "Not Island Endemic", "1" = "Island Endemic"),
+    name = ""
+  ) + 
+  labs(x = "Range Size", y = "PISc", color = "Island Endemic", ) +
+  theme_minimal()
+print(PIS_Range_Island)
+ggsave(
+  filename = "output/A3a/PIS_Range_Island.png",
+  plot = PIS_Range_Island,
   scale = 1,
   width=7,
   height=5
 )
 
-# --- Get PISc ~ Range, for each region ---
+# --- Get PISc ~ Range OLS, for each region ---
 PIS_Range_Region_Cor <- sapply(region_order, function(x) {
   cor(A3a$Range.Size..km2.[A3a$region==x], A3a$Phoneme.Inventory.Size[A3a$region==x])
 })
@@ -1066,6 +1091,14 @@ A2_ml_data$deltaBIC <- A2_ml_data$BIC - min_BIC
 write.csv(A2_ml_data, file = "output/A2/A2_ml_data.csv", row.names=FALSE)
 
 ## --- A3a --- ####
+
+# --- Get PISc ~ Range OLS ---
+A3a_PIS_Range_l1 = lm(data=A3a, Phoneme.Inventory.Size ~ Range.Size..km2.)
+summary(A3a_l1)
+# For each region
+A3a_PIS_Range_Region_lm <- lapply(region_order, function(x) {
+  summary(lm(data=A3a, A3a$Phoneme.Inventory.Size[A3a$region==x] ~ A3a$Range.Size..km2.[A3a$region==x]))
+})
 
 # --- Model predictor combinations ---
 A3a_predictors <- c("Island.Endemic" ,"Range.Size..km2.",
