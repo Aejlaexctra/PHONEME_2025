@@ -407,6 +407,7 @@ PIS_hist <- ggplot(raw_A1a, aes(x = Phoneme.Inventory.Size)) +
   ) + 
   scale_x_continuous(n.breaks = 15, expand = c(0, 0)) +
   scale_y_continuous(n.breaks = 15, expand = c(0, 0)) + 
+  coord_cartesian(xlim = c(0, 150), ylim = c(0, 400)) +
   theme_classic()
 
 ggsave(
@@ -582,6 +583,7 @@ PIS_hist <- ggplot(raw_A1b, aes(x = Phoneme.Inventory.Size)) +
   ) + 
   scale_x_continuous(n.breaks = 15, expand = c(0, 0)) +
   scale_y_continuous(n.breaks = 15, expand = c(0, 0)) + 
+  coord_cartesian(xlim = c(0, 150), ylim = c(0, 400)) +
   theme_classic()
 
 ggsave(
