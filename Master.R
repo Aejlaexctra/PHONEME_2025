@@ -781,6 +781,69 @@ A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0] <- log(
 head(A3a)
 summary(A3a)
 
+# --- PISc across regions and island endemism ---
+counts_real <- A3a %>%
+  group_by(region, Island.Endemic) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  mutate(Island.Endemic = factor(Island.Endemic, levels = c(0,1)))  # make factor
+
+# Create all combinations and merge
+PIS_Island_Region_counts <- expand_grid(
+  region = factor(region_order, levels = region_order),
+  Island.Endemic = factor(c(0,1), levels = c(0,1))
+) %>%
+  left_join(counts_real, by = c("region","Island.Endemic")) %>%
+  mutate(
+    n = ifelse(is.na(n), 0, n),  # missing combos get 0
+    x_comb = factor(paste0(region, "_", Island.Endemic),
+                    levels = paste0(rep(region_order, each = 2), "_", 0:1))
+  )
+A3a_expanded <- A3a %>%
+  mutate(
+    region = factor(region, levels = region_order),
+    Island.Endemic = factor(Island.Endemic, levels = c(0,1))
+  ) %>%
+  tidyr::complete(region, Island.Endemic, fill = list(Phoneme.Inventory.Size = NA)) %>%
+  arrange(region, Island.Endemic) %>%
+  mutate(
+    x_comb = factor(paste0(region, "_", Island.Endemic),
+                    levels = paste0(rep(region_order, each = 2), "_", 0:1))
+  )
+x_labels <- rep("", length(levels(A3a_expanded$x_comb)))
+x_labels[seq(1, length(x_labels), by = 2)] <- region_order
+# Step 3: Plot
+PIS_Island_Region <- ggplot(A3a_expanded, aes(x = x_comb, y = Phoneme.Inventory.Size, fill = Island.Endemic)) +
+  geom_boxplot(na.rm = TRUE, position = position_dodge(width = 0.8)) +
+  geom_text(
+    data = PIS_Island_Region_counts,
+    aes(x = x_comb, y = max(A3a_expanded$Phoneme.Inventory.Size, na.rm = TRUE) * 0.9, 
+        label = n),
+    position = position_dodge(width = 0.8),
+    size = 3
+  ) +
+  geom_hline(yintercept=median(A3a$Phoneme.Inventory.Size)) + 
+  scale_fill_manual(
+    values = c("0" = "#1f78b4", "1" = "#fb9a99"),
+    labels = c("0" = "Not Island Endemic", "1" = "Island Endemic"),
+    name = ""
+  ) +
+  labs(x = "Region", y = "Phoneme Inventory Size", fill = "Island Endemic") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+    axis.ticks.x=element_blank()
+  ) +
+  scale_x_discrete(labels = x_labels)
+
+print(PIS_Island_Region)
+ggsave(
+  filename = "output/A3a/PIS_Island_Region.png",
+  plot = PIS_Island_Region,
+  scale = 1,
+  width=8,
+  height=5
+)
+
 # --- PISc ~ Range ---
 # Regions labelled
 PIS_Range_Region <- ggplot(A3a, aes(x = Range.Size..km2., 
@@ -808,8 +871,8 @@ PIS_Range_Island <- ggplot(A3a, aes(x = Range.Size..km2.,
     labels = c("0" = "Not Island Endemic", "1" = "Island Endemic"),
     name = ""
   ) + 
-  labs(x = "Range Size", y = "PISc", color = "Island Endemic", ) +
-  theme_minimal()
+  labs(x = "Range Size (km^2)", y = "Phoneme Inventory Size", color = "Island Endemic", ) +
+  theme_classic()
 print(PIS_Range_Island)
 ggsave(
   filename = "output/A3a/PIS_Range_Island.png",
@@ -859,7 +922,7 @@ A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0] <- log(
 # --- Preview transformed data ---
 head(A3b)
 summary(A3b)
-# PIS ~ Range_Size, Grouping by Island Endemics
+# PIS ~ Range_Size
 PIS_Range <- ggplot(data = A3b,aes(x = Range.Size..km2., y = Phoneme.Inventory.Size)) +
   geom_point()
 print(PIS_Range)
