@@ -13,11 +13,13 @@ library(tidyr)
 library(maps)
 
 ## --- Loading Phylogenetic, Spatial Distance and Contact Matrices --- ####
+# Phylogenetic distance matrix
 phylomatrix <- read.csv("data/distance_matrices/phylogenetic_covariance_matrix.csv",
                         check.names = FALSE)
 rownames(phylomatrix) <- phylomatrix[,1]
 phylomatrix <- phylomatrix[,-1]
 phylomatrix <- as.matrix(phylomatrix)
+# Spatial distance matrix
 spmatrix <- read.csv("data/distance_matrices/spatial_distance_matrix.csv",
                      check.names = FALSE)
 rownames(spmatrix) <- spmatrix[,1]
@@ -27,19 +29,19 @@ spmatrix <- as.matrix(spmatrix)
 ## --- Loading NEE22 (3) --- ####
 nee22 <- read.csv("data/Global predictors of language endangerment and the future of linguistic diversity Data 2.csv",
                   stringsAsFactors = FALSE)
-colnames(nee22)[colnames(nee22) == "island"] <- "Island.Endemic"
-# Convert Documention variable from string to integer
-nee22$documentation[nee22$documentation == "little or none"] <- "0"
+colnames(nee22)[colnames(nee22) == "island"] <- "Island.Endemic" # Rename Island predictor to Island.Endemic
+nee22$documentation[nee22$documentation == "little or none"] <- "0" # Convert Documentation predictor from string to integer
 nee22$documentation[nee22$documentation == "basic"] <- "1"
 nee22$documentation[nee22$documentation == "detailed"] <- "2"
 nee22$documentation <- as.integer(nee22$documentation)
-# Change Region "Arab" to "North Africa and Arabia"
-nee22$region[nee22$region == "Arab"] <- "North Africa and Arabia"
+nee22$region[nee22$region == "Arab"] <- "North Africa and Arabia" # Change Region "Arab" to "North Africa and Arabia"
 
 ## --- Loading NEE24 (1) --- ####
 nee24 <- read.csv("data/Islands are engines of language diversity data.csv",
                   stringsAsFactors = FALSE)
+# Rename L1.Population predictor to L1_pop
 colnames(nee24)[colnames(nee24) == "L1.Population"] <- "L1_pop"
+# Set Island.Endemic predictor as numeric
 nee24$Island.Endemic <- as.numeric(nee24$Island.Endemic)
 
 ## --- Loading Phoible (4) --- ####
@@ -49,16 +51,8 @@ phoible <- merge(
   var_phon_inv_spec_data[, c("Glottocode", "Sounds", "Latitude", "Longitude")],
   var_phon_inv_glot_data[, c("ISO639P3code", "Glottocode")], by.x = "Glottocode", by.y = "Glottocode", all.x = TRUE)
 colnames(phoible)[colnames(phoible) == "Sounds"] <- "Phoneme.Inventory.Size"
-
-# --- Phoible Cleanup ---
-# Remove duplicate glottocode entries
-print("Duplicate Glottocode entries:")
-glotto_duplicates <- duplicated(phoible$Glottocode)
-print(phoible$Glottocode[glotto_duplicates])
-print(unique(phoible$Glottocode[glotto_duplicates]))
+glotto_duplicates <- duplicated(phoible$Glottocode) # Remove duplicate glottocode entries
 phoible <- phoible[!unlist(glotto_duplicates),]
-print("Size of dataset after duplicates removed:")
-print(dim(phoible)[1])
 
 # --- (2) FUNCTION DEFINITIONS --- ####
 
@@ -72,7 +66,7 @@ best_p <- function (p,formula,data,spmatrix,phylomatrix) {
     out <- -10000
   } else {
     out <- res$logLik
-    # if (res$logLik>0) {out <- -10000}
+    # if (res$logLik>0) {out <- -10000} # Positive log likelihoods tolerated, unlike function in (2)
   }
   -out
 }
@@ -90,123 +84,92 @@ ml_fit <- function (p,formula,data,spmatrix,phylomatrix) {
 ## --- A1a --- ####
 
 # --- Merging Datasets A1a ---
+# Dataset for Section 1, with variables:
+# PISa, L1_pop
 A1a <- merge(
   nee22[, 
         c("ISO", "L1_pop", "region", "Island.Endemic")],
   phoible[, c("ISO639P3code", "Glottocode", "Latitude", "Longitude", "Phoneme.Inventory.Size")], by.x = "ISO", by.y = "ISO639P3code", all.x = TRUE)
-
-# --- Data Cleanup A1a ---
-# Remove all NA entries
-print("Size of initial dataset:")
-print(dim(A1a)[1])
-A1a <- na.omit(A1a) 
-print("Size of dataset with NA removed:")
-print(dim(A1a)[1])
-# Remove iso duplicate entries
-print("Duplicate iso entries:")
-iso_duplicates <- which(table(A1a$ISO) != 1)
-print(which(table(A1a$ISO) != 1))
+A1a <- na.omit(A1a) # Remove all NA entries
+iso_duplicates <- which(table(A1a$ISO) != 1) # Remove iso duplicate entries
 A1a <- A1a[!(A1a$ISO %in% names(which(table(A1a$ISO) != 1))),]
-print("Size of dataset after duplicates removed:")
-print(dim(A1a)[1])
 
 # --- Adjusting data with matrices A1a ---
 common_ids <- Reduce(intersect, list(
   A1a$ISO,
   rownames(phylomatrix),
   rownames(spmatrix)
-))
-A1a <- A1a[A1a$ISO %in% common_ids, ]
+)) # Get common ISO codes across A1a, phylogenetic and spatial distance matrices
+A1a <- A1a[A1a$ISO %in% common_ids, ] # Remove languages with ISO codes not common to all
 A1a_phylomatrix <- phylomatrix[common_ids, common_ids]
 A1a_spmatrix <- spmatrix[common_ids, common_ids]
 
 ## --- A1b --- ####
 
 # --- Merging Datasets A1b ---
+# Dataset for Section 1 (Supplementary), with variables:
+# PISc, L1_pop (Island predictor not in OLS/GLS analysis but for plots)
 A1b <- merge(
   nee22[, 
-        c("ISO", "L1_pop", "region")],
-  nee24[, c("ISO693.3", "Phoneme.Inventory.Size", "Island.Endemic")], by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
-
-# --- Data Cleanup A1b ---
-# Remove all NA entries
-print("Size of initial dataset:")
-print(dim(A1b)[1])
-A1b <- na.omit(A1b) 
-print("Size of dataset with NA removed:")
-print(dim(A1b)[1])
-# Remove iso duplicate entries
-print("Duplicate iso entries:")
-iso_duplicates <- which(table(A1b$ISO) != 1)
-print(which(table(A1b$ISO) != 1))
+        c("ISO", "region")],
+  nee24[, c("ISO693.3", "Phoneme.Inventory.Size", "L1_pop", "Island.Endemic")], by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
+A1b <- na.omit(A1b) # Remove all NA entries
+iso_duplicates <- which(table(A1b$ISO) != 1) # Remove iso duplicate entries
 A1b <- A1b[!(A1b$ISO %in% names(which(table(A1b$ISO) != 1))),]
-print("Size of dataset after duplicates removed:")
-print(dim(A1b)[1])
 
 # --- Adjusting data with matrices A1b ---
 common_ids <- Reduce(intersect, list(
   A1b$ISO,
   rownames(phylomatrix),
   rownames(spmatrix)
-))
-A1b <- A1b[A1b$ISO %in% common_ids, ]
+)) # Get common ISO codes across A1b, phylogenetic and spatial distance matrices
+A1b <- A1b[A1b$ISO %in% common_ids, ] # Remove languages with ISO codes not common to all
 A1b_phylomatrix <- phylomatrix[common_ids, common_ids]
 A1b_spmatrix <- spmatrix[common_ids, common_ids]
 
 ## --- A2 --- ####
 
 ## Merging Datasets
+# Dataset for Section 2, with variables:
+# PISc, Bordering, Altitude, L1_pop, Island and Range 
 A2 <- merge(
   nee22[, 
-        c("ISO", "region", "L1_pop", "bordering_language_richness", "altitude_range")],
-  nee24[, c("ISO693.3", "Phoneme.Inventory.Size", "Island.Endemic", "Range.Size..km2.")], 
+        c("ISO", "region", "bordering_language_richness", "altitude_range")],
+  nee24[, c("ISO693.3", "Phoneme.Inventory.Size", "L1_pop", "Island.Endemic", "Range.Size..km2.")], 
   by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
-
-# --- Data Cleanup ---
-# Remove all NA entries
-paste("Size of initial dataset:", dim(A2)[1])
-old_A2 <- A2
-A2 <- na.omit(A2) 
-paste("Size of dataset with NA removed:", dim(A2)[1])
-# Remove iso duplicate entries
-print("Duplicate iso entries:")
-iso_duplicates <- duplicated(A2$ISO)
-print(A2$ISO[iso_duplicates])
+A2 <- na.omit(A2) # Remove all NA entries
+iso_duplicates <- duplicated(A2$ISO) # Remove iso duplicate entries
 A2 <- A2[!unlist(iso_duplicates),]
-paste("Size of dataset after duplicates removed:", dim(A2)[1])
 
 # --- Adjusting data with matrices ---
 common_ids <- Reduce(intersect, list(
   A2$ISO,
   rownames(phylomatrix),
   rownames(spmatrix)
-))
-A2 <- A2[A2$ISO %in% common_ids, ]
+)) # Get common ISO codes across A2, phylogenetic and spatial distance matrices
+A2 <- A2[A2$ISO %in% common_ids, ] # Remove languages with ISO codes not common to all
 A2_phylomatrix <- phylomatrix[common_ids, common_ids]
 A2_spmatrix <- spmatrix[common_ids, common_ids]
 
 ## --- A3a --- ####
 
 # --- Prepare dataset ---
-# Merge datasets
+## Merging datasets
+# Dataset for Section 3, with variables:
+# PISc, Bordering, L1_pop, Island, Mainland, Continent and Range 
 A3a <- merge(nee22[, c("ISO", "region", "bordering_language_richness")], 
              nee24[, c("ISO693.3", "L1_pop","Phoneme.Inventory.Size", "Island.Endemic", 
                        "Distance.to.Mainland", "Distance.to.Continent", "Range.Size..km2.")], 
              by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
-# Remove all NA entries
-A3a <- na.omit(A3a) 
-paste("Size of dataset with NA remove:", dim(A3a)[1])
-paste("#Island.Endemic: ", sum(A3a$Island.Endemic))
-paste("#Island.Endemic to Total Ratio: ", sum(A3a$Island.Endemic) / dim(A3a)[1])
-paste("Dataset with all languages",dim(A3a)[[1]])
+A3a <- na.omit(A3a) # Remove all NA entries
 
 # --- Adjusting A3a data with matrices ---
 common_ids <- Reduce(intersect, list(
   A3a$ISO,
   rownames(phylomatrix),
   rownames(spmatrix)
-))
-A3a <- A3a[A3a$ISO %in% common_ids, ]
+)) # Get common ISO codes across A3a, phylogenetic and spatial distance matrices
+A3a <- A3a[A3a$ISO %in% common_ids, ] # Remove languages with ISO codes not common to all
 A3a_phylomatrix <- phylomatrix[common_ids, common_ids]
 A3a_spmatrix <- spmatrix[common_ids, common_ids]
 
