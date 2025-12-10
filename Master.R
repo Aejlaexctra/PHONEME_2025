@@ -366,7 +366,7 @@ PIS_hist <- ggplot(raw_A1a, aes(x = Phoneme.Inventory.Size)) +
   geom_histogram() +
   labs(
     y = "Number of Languages",
-    x = "PISa",
+    x = "PIS_A",
   ) + 
   scale_x_continuous(n.breaks = 15, expand = c(0, 0)) +
   scale_y_continuous(n.breaks = 15, expand = c(0, 0)) + 
@@ -542,7 +542,7 @@ PIS_hist <- ggplot(raw_A1b, aes(x = Phoneme.Inventory.Size)) +
   geom_histogram() +
   labs(
     y = "Number of Languages",
-    x = "PISc",
+    x = "PIS_C",
   ) + 
   scale_x_continuous(n.breaks = 15, expand = c(0, 0)) +
   scale_y_continuous(n.breaks = 15, expand = c(0, 0)) + 
@@ -1008,22 +1008,6 @@ A2_models <- c(Phoneme.Inventory.Size ~ 1)
 for (i in 1:n_pred) {
   for (j in 1:dim(pred_combs[[i]])[2]) {
     combination <- pred_combs[[i]][,j]
-    # Accounting for interactions
-    # if(all(c("Island.Endemic","area") %in% combination)){
-    #   int_model <- (paste(response, paste(combination, "Island.Endemic:area", collapse="+"), sep="~"))
-    #   int_model <- as.formula(int_model)
-    #   int_models <- c(models,int_model)
-    # }
-    # if(all(c("L1_pop","area") %in% combination)){
-    #   int_model <- (paste(response, paste(combination, "L1_pop:area", collapse="+"), sep="~"))
-    #   int_model <- as.formula(int_model)
-    #   int_models <- c(models,int_model)
-    # }
-    # if(all(c("bordering_language_richness","area") %in% combination)){
-    #   int_model <- (paste(response, paste(combination, "bordering_language_richness:area", collapse="+"), sep="~"))
-    #   int_model <- as.formula(int_model)
-    #   int_models <- c(models,int_model)
-    # }
     model <- (paste(response, paste(combination, collapse="+"), sep="~"))
     model <- as.formula(model)
     A2_models <- c(A2_models,model)
@@ -1065,6 +1049,7 @@ A2_summaries <- list("Island.Endemic" = as.list(rep(NA,n)),
                      "L1_pop" = as.list(rep(NA,n)))
 ml_logLik <- c()
 ml_BIC <- c()
+ml_AIC <- c()
 ml_MSE <- c()
 
 for (i in 1:n){
@@ -1074,6 +1059,7 @@ for (i in 1:n){
   if(dim(ml_summary$tTable)[1] == 1) {
     ml_logLik <- c(ml_logLik, ml_summary$logLik)
     ml_BIC <- c(ml_BIC, ml_summary$BIC)
+    ml_AIC <- c(ml_AIC, ml_summary$AIC)
     ml_MSE <- c(ml_MSE, sum(A2_fits[[i]]$residuals**2)/dim(A2)[1])
     next
   }
@@ -1086,21 +1072,26 @@ for (i in 1:n){
   # Get number of coefficients
   n_coef <- length(coef_names)
   # Add coef info into model_summaries
+  # for (j in 2:n_coef){
+  #   if(coef_p[j]<=0.05){
+  #     A2_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
+  #   } else {
+  #     A2_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
+  #   }
+  # }
   for (j in 2:n_coef){
-    if(coef_p[j]<=0.05){
-      A2_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
-    } else {
-      A2_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
-    }
+    A2_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j],4),",",round(coef_p[j],4))
   }
   # Add BIC, logLik and MLE
   ml_logLik <- c(ml_logLik, ml_summary$logLik)
   ml_BIC <- c(ml_BIC, ml_summary$BIC)
+  ml_AIC <- c(ml_AIC, ml_summary$AIC)
   ml_MSE <- c(ml_MSE, sum(A2_fits[[i]]$residuals**2)/dim(A2)[1])
 }
 
 # Create new data frame from lists
 A2_ml_data <- data.frame(BIC = ml_BIC,
+                      AIC = ml_AIC,
                       logLik = ml_logLik,
                       MSE = ml_MSE,
                       unlist(A2_summaries$Island.Endemic),
@@ -1109,14 +1100,21 @@ A2_ml_data <- data.frame(BIC = ml_BIC,
                       unlist(A2_summaries$bordering_language_richness),
                       unlist(A2_summaries$L1_pop),
                       stringsAsFactors = FALSE)
-colnames(A2_ml_data) <- c("BIC", "logLik", "MSE", A2_predictors)
+colnames(A2_ml_data) <- c("BIC", "AIC", "logLik", "MSE", A2_predictors)
 # Sort based on increasing BIC
-A2_ml_data <- A2_ml_data[order(A2_ml_data$BIC), ]
+A2_ml_data_BIC <- A2_ml_data[order(A2_ml_data$BIC), ]
 # Add delta BIC column (min_BIC - current_BIC)
-min_BIC <-  min(A2_ml_data$BIC)
-A2_ml_data$deltaBIC <- A2_ml_data$BIC - min_BIC
+min_BIC <-  min(A2_ml_data_BIC$BIC)
+A2_ml_data_BIC$deltaBIC <- A2_ml_data_BIC$BIC - min_BIC
 # Save output
-write.csv(A2_ml_data, file = "output/A2/A2_ml_data.csv", row.names=FALSE)
+write.csv(A2_ml_data_BIC, file = "output/A2/A2_ml_data_BIC.csv", row.names=FALSE)
+# Sort based on increasing AIC
+A2_ml_data_AIC <- A2_ml_data[order(A2_ml_data$AIC), ]
+# Add delta AIC column (min_AIC - current_AIC)
+min_AIC <-  min(A2_ml_data_AIC$AIC)
+A2_ml_data_AIC$deltaAIC <- A2_ml_data_AIC$AIC - min_AIC
+# Save output
+write.csv(A2_ml_data_AIC, file = "output/A2/A2_ml_data_AIC.csv", row.names=FALSE)
 
 ## --- A3a --- ####
 
@@ -1126,6 +1124,11 @@ summary(A3a_l1)
 # For each region
 A3a_PIS_Range_Region_lm <- lapply(region_order, function(x) {
   summary(lm(data=A3a, A3a$Phoneme.Inventory.Size[A3a$region==x] ~ A3a$Range.Size..km2.[A3a$region==x]))
+})
+# For each region with only non-island languages
+A3a_PIS_NI_Range_Region_lm <- lapply(region_order, function(x) {
+  summary(lm(data=A3a,
+             A3a$Phoneme.Inventory.Size[A3a$region==x & A3a$Island.Endemic == 0] ~ A3a$Range.Size..km2.[A3a$region==x  & A3a$Island.Endemic == 0]))
 })
 
 # --- Model predictor combinations ---
@@ -1179,6 +1182,7 @@ A3a_summaries <- list("Island.Endemic" = as.list(rep(NA,n)),
                      "L1_pop" = as.list(rep(NA,n)))
 ml_logLik <- c()
 ml_BIC <- c()
+ml_AIC <- c()
 ml_MSE <- c()
 
 for (i in 1:n){
@@ -1188,6 +1192,7 @@ for (i in 1:n){
   if(dim(ml_summary$tTable)[1] == 1) {
     ml_logLik <- c(ml_logLik, ml_summary$logLik)
     ml_BIC <- c(ml_BIC, ml_summary$BIC)
+    ml_AIC <- c(ml_AIC, ml_summary$AIC)
     ml_MSE <- c(ml_MSE, sum(A3a_fits[[i]]$residuals**2)/dim(A3a)[1])
     next
   }
@@ -1200,21 +1205,26 @@ for (i in 1:n){
   # Get number of coefficients
   n_coef <- length(coef_names)
   # Add coef info into model_summaries
+  # for (j in 2:n_coef){
+  #   if(coef_p[j]<=0.05){
+  #     A3a_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
+  #   } else {
+  #     A3a_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
+  #   }
+  # }
   for (j in 2:n_coef){
-    if(coef_p[j]<=0.05){
-      A3a_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
-    } else {
-      A3a_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
-    }
+    A3a_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j],4),",",round(coef_p[j],4))
   }
   # Add BIC, logLik and MLE
   ml_logLik <- c(ml_logLik, ml_summary$logLik)
   ml_BIC <- c(ml_BIC, ml_summary$BIC)
+  ml_AIC <- c(ml_AIC, ml_summary$AIC)
   ml_MSE <- c(ml_MSE, sum(A3a_fits[[i]]$residuals**2)/dim(A3a)[1])
 }
 
 # Create new data frame from lists
 A3a_ml_data <- data.frame(BIC = ml_BIC,
+                      AIC = ml_AIC,
                       logLik = ml_logLik,
                       MSE = ml_MSE,
                       unlist(A3a_summaries$Island.Endemic),
@@ -1223,14 +1233,21 @@ A3a_ml_data <- data.frame(BIC = ml_BIC,
                       unlist(A3a_summaries$Distance.to.Continent),
                       unlist(A3a_summaries$L1_pop),
                       stringsAsFactors = FALSE)
-colnames(A3a_ml_data) <- c("BIC", "logLik", "MSE", A3a_predictors)
+colnames(A3a_ml_data) <- c("BIC", "AIC", "logLik", "MSE", A3a_predictors)
 # Sort based on increasing BIC
-A3a_ml_data <- A3a_ml_data[order(A3a_ml_data$BIC), ]
+A3a_ml_data_BIC <- A3a_ml_data[order(A3a_ml_data$BIC), ]
 # Add delta BIC column (min_BIC - current_BIC)
-min_BIC <-  min(A3a_ml_data$BIC)
-A3a_ml_data$deltaBIC <- A3a_ml_data$BIC - min_BIC
+min_BIC <-  min(A3a_ml_data_BIC$BIC)
+A3a_ml_data_BIC$deltaBIC <- A3a_ml_data_BIC$BIC - min_BIC
 # Save output
-write.csv(A3a_ml_data, file = "output/A3a/A3a_ml_data.csv", row.names=FALSE)
+write.csv(A3a_ml_data_BIC, file = "output/A3a/A3a_ml_data_BIC.csv", row.names=FALSE)
+# Sort based on increasing AIC
+A3a_ml_data_AIC <- A3a_ml_data[order(A3a_ml_data$AIC), ]
+# Add delta AIC column (min_AIC - current_AIC)
+min_AIC <-  min(A3a_ml_data$AIC)
+A3a_ml_data_AIC$deltaAIC <- A3a_ml_data_AIC$AIC - min_AIC
+# Save output
+write.csv(A3a_ml_data_AIC, file = "output/A3a/A3a_ml_data_AIC.csv", row.names=FALSE)
 
 ## --- A3b --- ####
 
@@ -1307,9 +1324,9 @@ for (i in 1:n){
   # Add coef info into model_summaries
   for (j in 2:n_coef){
     if(coef_p[j]<=0.05){
-      A3b_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
+      A3b_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 4),"***")
     } else {
-      A3b_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
+      A3b_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 4))
     }
   }
   # Add BIC, logLik and MLE
