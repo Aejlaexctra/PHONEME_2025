@@ -535,6 +535,11 @@ raw_A1b <- read.csv("output/A1b/A1b_adjusted.csv")
 load("output/A1b/A1b_phylomatrix.RData")
 load("output/A1b/A1b_spmatrix.RData")
 
+# --- Log transform variables A1b ---
+A1b<- raw_A1b
+A1b$Phoneme.Inventory.Size <- log(A1b$Phoneme.Inventory.Size) 
+A1b$L1_pop <- log(A1b$L1_pop + 0.5)
+
 head(raw_A1b)
 summary(raw_A1b)
 # Phoneme Inventory Size distribution
@@ -555,11 +560,6 @@ ggsave(
   scale = 1
 )
 print(PIS_hist)
-
-# --- Log transform variables A1b ---
-A1b<- raw_A1b
-A1b$Phoneme.Inventory.Size <- log(A1b$Phoneme.Inventory.Size) 
-A1b$L1_pop <- log(A1b$L1_pop + 0.5)
 
 # --- Preview correlations A1b ---
 # Plot data
@@ -702,6 +702,12 @@ A2$altitude_range <- log(A2$altitude_range + 0.5)
 A2$L1_pop <- log(A2$L1_pop + 0.5)
 A2$bordering_language_richness <- log(A2$bordering_language_richness + 0.5)
 
+# --- Standardise predictors ---
+A2$Range.Size..km2. <- scale(A2$Range.Size..km2.)
+A2$altitude_range <- scale(A2$altitude_range)
+A2$L1_pop <- scale(A2$L1_pop)
+A2$bordering_language_richness <- scale(A2$bordering_language_richness)
+
 # --- Preview transformed data ---
 head(A2)
 summary(A2)
@@ -739,6 +745,13 @@ A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0] <- log(
   A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0])
 A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0] <- log(
   A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0])
+
+# --- Standardise predictors ---
+A3a$Range.Size..km2. <- scale(A3a$Range.Size..km2.)
+A3a$L1_pop <- scale(A3a$L1_pop)
+A3a$bordering_language_richness <- scale(A3a$bordering_language_richness)
+A3a$Distance.to.Mainland <- scale(A3a$Distance.to.Mainland)
+A3a$Distance.to.Continent <- scale(A3a$Distance.to.Continent)
 
 # --- Preview transformed data ---
 head(A3a)
@@ -881,6 +894,12 @@ A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0] <- log(
   A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0])
 A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0] <- log(
   A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0])
+
+# --- Standardise predictors ---
+A3b$Range.Size..km2. <- scale(A3b$Range.Size..km2.)
+A3b$L1_pop <- scale(A3b$L1_pop)
+A3b$Distance.to.Mainland <- scale(A3b$Distance.to.Mainland)
+A3b$Distance.to.Continent <- scale(A3b$Distance.to.Continent)
 
 # --- Preview transformed data ---
 head(A3b)
