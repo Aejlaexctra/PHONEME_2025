@@ -1139,7 +1139,7 @@ write.csv(A2_ml_data_AIC, file = "output/A2/A2_ml_data_AIC.csv", row.names=FALSE
 
 # --- Get PISc ~ Range OLS ---
 A3a_PIS_Range_l1 = lm(data=A3a, Phoneme.Inventory.Size ~ Range.Size..km2.)
-summary(A3a_l1)
+summary(A3a_PIS_Range_l1)
 # For each region
 A3a_PIS_Range_Region_lm <- lapply(region_order, function(x) {
   summary(lm(data=A3a, A3a$Phoneme.Inventory.Size[A3a$region==x] ~ A3a$Range.Size..km2.[A3a$region==x]))
