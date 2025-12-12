@@ -1149,6 +1149,8 @@ A3a_PIS_NI_Range_Region_lm <- lapply(region_order, function(x) {
   summary(lm(data=A3a,
              A3a$Phoneme.Inventory.Size[A3a$region==x & A3a$Island.Endemic == 0] ~ A3a$Range.Size..km2.[A3a$region==x  & A3a$Island.Endemic == 0]))
 })
+# For only Oceania region island languages
+A3a_PIS_Range_l2 = lm(data=A3a[A3a$region == "Oceania" & A3a$Island.Endemic == 1,], Phoneme.Inventory.Size ~ Range.Size..km2.)
 
 # --- Model predictor combinations ---
 A3a_predictors <- c("Island.Endemic" ,"Range.Size..km2.",
