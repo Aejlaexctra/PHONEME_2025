@@ -131,7 +131,7 @@ A1b_spmatrix <- spmatrix[common_ids, common_ids]
 
 ## Merging Datasets
 # Dataset for Section 2, with variables:
-# PISc, Bordering, Altitude, L1_pop, Island and Range 
+# PISc, Bordering, Altitude, L1_pop, Island and Area 
 A2 <- merge(
   nee22[, 
         c("ISO", "region", "bordering_language_richness", "altitude_range")],
@@ -156,7 +156,7 @@ A2_spmatrix <- spmatrix[common_ids, common_ids]
 # --- Prepare dataset ---
 ## Merging datasets
 # Dataset for Section 3, with variables:
-# PISc, Bordering, L1_pop, Island, Mainland, Continent and Range 
+# PISc, Bordering, L1_pop, Island, Mainland, Continent andArea
 A3a <- merge(nee22[, c("ISO", "region", "bordering_language_richness")], 
              nee24[, c("ISO693.3", "L1_pop","Phoneme.Inventory.Size", "Island.Endemic", 
                        "Distance.to.Mainland", "Distance.to.Continent", "Range.Size..km2.")], 
@@ -221,6 +221,75 @@ common_ids <- Reduce(intersect, list(
 A4 <- A4[A4$ISO %in% common_ids, ]
 A4_phylomatrix <- phylomatrix[common_ids, common_ids]
 A4_spmatrix <- spmatrix[common_ids, common_ids]
+
+## --- A5a --- ####
+A5_shared_ISO <- intersect(A1a$ISO,A2$ISO) # Get shared languages between A1a (PISa) and A2 (PISc) datasets
+
+# --- Prepare dataset ---
+## Trimming datasets of A1a
+# Dataset for Re-analysis of languages in both PISa and PISc , with variables:
+A5a <- A1a[A1a$ISO %in% A5_shared_ISO,]
+
+# --- Adjusting A5a data with matrices ---
+common_ids <- Reduce(intersect, list(
+  A5a$ISO,
+  rownames(phylomatrix),
+  rownames(spmatrix)
+)) # Get common ISO codes across A5a, phylogenetic and spatial distance matrices
+A5a <- A5a[A5a$ISO %in% common_ids, ] # Remove languages with ISO codes not common to all
+A5a_phylomatrix <- phylomatrix[common_ids, common_ids]
+A5a_spmatrix <- spmatrix[common_ids, common_ids]
+
+## --- A5b --- ####
+
+# --- Prepare dataset ---
+## Trimming datasets of A2
+# Dataset for Re-analysis of languages in both PISa and PISc , with variables:
+A5b <- A2[A2$ISO %in% A5_shared_ISO,]
+
+# --- Adjusting A5b data with matrices ---
+common_ids <- Reduce(intersect, list(
+  A5b$ISO,
+  rownames(phylomatrix),
+  rownames(spmatrix)
+)) # Get common ISO codes across A5b, phylogenetic and spatial distance matrices
+A5b <- A5b[A5b$ISO %in% common_ids, ] # Remove languages with ISO codes not common to all
+A5b_phylomatrix <- phylomatrix[common_ids, common_ids]
+A5b_spmatrix <- spmatrix[common_ids, common_ids]
+
+## --- A5c --- ####
+
+# --- Prepare dataset ---
+## Trimming datasets of A3a
+# Dataset for Re-analysis of languages in both PISa and PISc , with variables:
+A5c <- A3a[A3a$ISO %in% A5_shared_ISO,]
+
+# --- Adjusting A5c data with matrices ---
+common_ids <- Reduce(intersect, list(
+  A5c$ISO,
+  rownames(phylomatrix),
+  rownames(spmatrix)
+)) # Get common ISO codes across A5c, phylogenetic and spatial distance matrices
+A5c <- A5c[A5c$ISO %in% common_ids, ] # Remove languages with ISO codes not common to all
+A5c_phylomatrix <- phylomatrix[common_ids, common_ids]
+A5c_spmatrix <- spmatrix[common_ids, common_ids]
+
+## --- A5d --- ####
+
+# --- Prepare dataset ---
+## Trimming datasets of A4
+# Dataset for Re-analysis of languages in both PISa and PISc , with variables:
+A5d <- A4[A4$ISO %in% A5_shared_ISO,]
+
+# --- Adjusting A5d data with matrices ---
+common_ids <- Reduce(intersect, list(
+  A5d$ISO,
+  rownames(phylomatrix),
+  rownames(spmatrix)
+)) # Get common ISO codes across A5d, phylogenetic and spatial distance matrices
+A5d <- A5d[A5d$ISO %in% common_ids, ] # Remove languages with ISO codes not common to all
+A5d_phylomatrix <- phylomatrix[common_ids, common_ids]
+A5d_spmatrix <- spmatrix[common_ids, common_ids]
 
 # --- (4) EXPORT DATASETS FOR ANALYSIS --- ####
 
@@ -321,10 +390,175 @@ print(A4_spmatrix[1:10,1:10])
 save(A4_phylomatrix, file = "output/A4/A4_phylomatrix.RData") 
 save(A4_spmatrix, file = "output/A4/A4_spmatrix.RData")
 
-## CLEAR ALL CURRENT VARIABLES ####
-# rm(list = ls())
+## --- A5a --- ####
 
-# --- (5) DATASET VISUALISATION --- ####
+# Preview and save data
+paste("Size of dataset adjusted:", dim(A5a)[1])
+# save data 
+write.csv(A5a, file = "output/A5a/A5a_adjusted.csv", row.names=FALSE)
+
+# Preview and save matrices
+print(dim(A5a_phylomatrix))
+print(dim(A5a_spmatrix))
+print(A5a_phylomatrix[1:10,1:10])
+print(A5a_spmatrix[1:10,1:10])
+save(A5a_phylomatrix, file = "output/A5a/A5a_phylomatrix.RData") 
+save(A5a_spmatrix, file = "output/A5a/A5a_spmatrix.RData")
+
+## --- A5b --- ####
+
+# Preview and save data
+paste("Size of dataset adjusted:", dim(A5b)[1])
+# save data 
+write.csv(A5b, file = "output/A5b/A5b_adjusted.csv", row.names=FALSE)
+
+# Preview and save matrices
+print(dim(A5b_phylomatrix))
+print(dim(A5b_spmatrix))
+print(A5b_phylomatrix[1:10,1:10])
+print(A5b_spmatrix[1:10,1:10])
+save(A5b_phylomatrix, file = "output/A5b/A5b_phylomatrix.RData") 
+save(A5b_spmatrix, file = "output/A5b/A5b_spmatrix.RData")
+
+## --- A5c --- ####
+
+# Preview and save data
+paste("Size of dataset adjusted:", dim(A5c)[1])
+# save data 
+write.csv(A5c, file = "output/A5c/A5c_adjusted.csv", row.names=FALSE)
+
+# Preview and save matrices
+print(dim(A5c_phylomatrix))
+print(dim(A5c_spmatrix))
+print(A5c_phylomatrix[1:10,1:10])
+print(A5c_spmatrix[1:10,1:10])
+save(A5c_phylomatrix, file = "output/A5c/A5c_phylomatrix.RData") 
+save(A5c_spmatrix, file = "output/A5c/A5c_spmatrix.RData")
+
+## --- A5d --- ####
+
+# Preview and save data
+paste("Size of dataset adjusted:", dim(A5d)[1])
+# save data 
+write.csv(A5d, file = "output/A5d/A5d_adjusted.csv", row.names=FALSE)
+
+# Preview and save matrices
+print(dim(A5d_phylomatrix))
+print(dim(A5d_spmatrix))
+print(A5d_phylomatrix[1:10,1:10])
+print(A5d_spmatrix[1:10,1:10])
+save(A5d_phylomatrix, file = "output/A5d/A5d_phylomatrix.RData") 
+save(A5d_spmatrix, file = "output/A5d/A5d_spmatrix.RData")
+
+# --- (5) TRANSFORM VARIABLES --- ####
+
+## --- A1a --- ####
+A1a$Phoneme.Inventory.Size <- log(A1a$Phoneme.Inventory.Size) 
+A1a$L1_pop <- log(A1a$L1_pop + 0.5)
+
+## --- A1b ---  ####
+A1b$Phoneme.Inventory.Size <- log(A1b$Phoneme.Inventory.Size) 
+A1b$L1_pop <- log(A1b$L1_pop + 0.5)
+
+## --- A2 ---  ####
+
+# --- Log transform variables ---
+A2$Phoneme.Inventory.Size <- log(A2$Phoneme.Inventory.Size) 
+A2$Range.Size..km2. <- log(A2$Range.Size..km2.)
+A2$altitude_range <- log(A2$altitude_range + 0.5)
+A2$L1_pop <- log(A2$L1_pop + 0.5)
+A2$bordering_language_richness <- log(A2$bordering_language_richness + 0.5)
+
+# --- Standardise predictors ---
+A2$Range.Size..km2. <- scale(A2$Range.Size..km2.)
+A2$altitude_range <- scale(A2$altitude_range)
+A2$L1_pop <- scale(A2$L1_pop)
+A2$bordering_language_richness <- scale(A2$bordering_language_richness)
+
+## --- A3a ---  ####
+
+# --- Log transform variables ---
+A3a$Phoneme.Inventory.Size <- log(A3a$Phoneme.Inventory.Size) 
+A3a$Range.Size..km2. <- log(A3a$Range.Size..km2.)
+A3a$L1_pop <- log(A3a$L1_pop + 0.5)
+A3a$bordering_language_richness <- log(A3a$bordering_language_richness + 0.5)
+# Do not transform zero entries for distance variables
+A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0] <- log(
+  A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0])
+A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0] <- log(
+  A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0])
+
+# --- Standardise predictors ---
+A3a$Range.Size..km2. <- scale(A3a$Range.Size..km2.)
+A3a$L1_pop <- scale(A3a$L1_pop)
+A3a$bordering_language_richness <- scale(A3a$bordering_language_richness)
+A3a$Distance.to.Mainland <- scale(A3a$Distance.to.Mainland)
+A3a$Distance.to.Continent <- scale(A3a$Distance.to.Continent)
+
+## --- A3b ---  ####
+
+# --- Log transform variables ---
+A3b$Phoneme.Inventory.Size <- log(A3b$Phoneme.Inventory.Size) 
+A3b$Range.Size..km2. <- log(A3b$Range.Size..km2.)
+A3b$L1_pop <- log(A3b$L1_pop + 0.5)
+# Do not transform zero entries for distance variables
+A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0] <- log(
+  A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0])
+A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0] <- log(
+  A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0])
+
+# --- Standardise predictors ---
+A3b$Range.Size..km2. <- scale(A3b$Range.Size..km2.)
+A3b$L1_pop <- scale(A3b$L1_pop)
+A3b$Distance.to.Mainland <- scale(A3b$Distance.to.Mainland)
+A3b$Distance.to.Continent <- scale(A3b$Distance.to.Continent)
+
+## --- A4 --- ####
+A4$Phoneme.Inventory.Size <- log(A4$Phoneme.Inventory.Size) 
+
+## --- A5a --- ####
+A5a$Phoneme.Inventory.Size <- log(A5a$Phoneme.Inventory.Size) 
+A5a$L1_pop <- log(A5a$L1_pop + 0.5)
+
+## --- A5b ---  ####
+
+# --- Log transform variables ---
+A5b$Phoneme.Inventory.Size <- log(A5b$Phoneme.Inventory.Size) 
+A5b$Range.Size..km2. <- log(A5b$Range.Size..km2.)
+A5b$altitude_range <- log(A5b$altitude_range + 0.5)
+A5b$L1_pop <- log(A5b$L1_pop + 0.5)
+A5b$bordering_language_richness <- log(A5b$bordering_language_richness + 0.5)
+
+# --- Standardise predictors ---
+A5b$Range.Size..km2. <- scale(A5b$Range.Size..km2.)
+A5b$altitude_range <- scale(A5b$altitude_range)
+A5b$L1_pop <- scale(A5b$L1_pop)
+A5b$bordering_language_richness <- scale(A5b$bordering_language_richness)
+
+## --- A5c ---  ####
+
+# --- Log transform variables ---
+A5c$Phoneme.Inventory.Size <- log(A5c$Phoneme.Inventory.Size) 
+A5c$Range.Size..km2. <- log(A5c$Range.Size..km2.)
+A5c$L1_pop <- log(A5c$L1_pop + 0.5)
+A5c$bordering_language_richness <- log(A5c$bordering_language_richness + 0.5)
+# Do not transform zero entries for distance variables
+A5c$Distance.to.Mainland[A5c$Distance.to.Mainland != 0] <- log(
+  A5c$Distance.to.Mainland[A5c$Distance.to.Mainland != 0])
+A5c$Distance.to.Continent[A5c$Distance.to.Continent != 0] <- log(
+  A5c$Distance.to.Continent[A5c$Distance.to.Continent != 0])
+
+# --- Standardise predictors ---
+A5c$Range.Size..km2. <- scale(A5c$Range.Size..km2.)
+A5c$L1_pop <- scale(A5c$L1_pop)
+A5c$bordering_language_richness <- scale(A5c$bordering_language_richness)
+A5c$Distance.to.Mainland <- scale(A5c$Distance.to.Mainland)
+A5c$Distance.to.Continent <- scale(A5c$Distance.to.Continent)
+
+## --- A5d --- ####
+A5d$Phoneme.Inventory.Size <- log(A5d$Phoneme.Inventory.Size) 
+
+# --- (6) DATASET VISUALISATION --- ####
 
 ## Setup ####
 
@@ -353,11 +587,6 @@ if(!exists("nee22")){
 
 ## --- A1a --- ####
 
-# --- Get raw A1a adjusted data and matrices ---
-raw_A1a <- read.csv("output/A1a/A1a_adjusted.csv")
-load("output/A1a/A1a_phylomatrix.RData")
-load("output/A1a/A1a_spmatrix.RData")
-
 # --- Preview raw data A1a ---
 head(raw_A1a)
 summary(raw_A1a)
@@ -380,11 +609,6 @@ ggsave(
 )
 print(PIS_hist)
 
-# --- Log transform variables A1a ---
-A1a <- raw_A1a
-A1a$Phoneme.Inventory.Size <- log(A1a$Phoneme.Inventory.Size) 
-A1a$L1_pop <- log(A1a$L1_pop + 0.5)
-
 # --- Mapping phoneme inventory sizes onto world map A1a ---
 # Get world map data
 world <- map_data("world")
@@ -398,7 +622,7 @@ PIS_world_map <-ggplot() +
   # Points with size and color based on count
   geom_point(
     data = A1a,
-    aes(x = Longitude, y = Latitude, color = log(Phoneme.Inventory.Size)),
+    aes(x = Longitude, y = Latitude, color = Phoneme.Inventory.Size),
     alpha = 0.7
   ) +
   scale_color_viridis_c(option="plasma") +
@@ -534,11 +758,6 @@ ggsave("output/A1a/phoneme_region_box.png", plot = box_phoneme_regions, width = 
 raw_A1b <- read.csv("output/A1b/A1b_adjusted.csv")
 load("output/A1b/A1b_phylomatrix.RData")
 load("output/A1b/A1b_spmatrix.RData")
-
-# --- Log transform variables A1b ---
-A1b<- raw_A1b
-A1b$Phoneme.Inventory.Size <- log(A1b$Phoneme.Inventory.Size) 
-A1b$L1_pop <- log(A1b$L1_pop + 0.5)
 
 head(raw_A1b)
 summary(raw_A1b)
@@ -694,20 +913,6 @@ raw_A2 <- read.csv("output/A2/A2_adjusted.csv")
 load("output/A2/A2_phylomatrix.RData")
 load("output/A2/A2_spmatrix.RData")
 
-# --- Log transform variables ---
-A2 <- raw_A2
-A2$Phoneme.Inventory.Size <- log(A2$Phoneme.Inventory.Size) 
-A2$Range.Size..km2. <- log(A2$Range.Size..km2.)
-A2$altitude_range <- log(A2$altitude_range + 0.5)
-A2$L1_pop <- log(A2$L1_pop + 0.5)
-A2$bordering_language_richness <- log(A2$bordering_language_richness + 0.5)
-
-# --- Standardise predictors ---
-A2$Range.Size..km2. <- scale(A2$Range.Size..km2.)
-A2$altitude_range <- scale(A2$altitude_range)
-A2$L1_pop <- scale(A2$L1_pop)
-A2$bordering_language_richness <- scale(A2$bordering_language_richness)
-
 # --- Preview transformed data ---
 head(A2)
 summary(A2)
@@ -733,25 +938,6 @@ cor.test(A2$Phoneme.Inventory.Size,A2$Island.Endemic)
 raw_A3a <- read.csv("output/A3a/A3a_adjusted.csv")
 load("output/A3a/A3a_phylomatrix.RData")
 load("output/A3a/A3a_spmatrix.RData")
-
-# --- Log transform variables ---
-A3a <- raw_A3a
-A3a$Phoneme.Inventory.Size <- log(A3a$Phoneme.Inventory.Size) 
-A3a$Range.Size..km2. <- log(A3a$Range.Size..km2.)
-A3a$L1_pop <- log(A3a$L1_pop + 0.5)
-A3a$bordering_language_richness <- log(A3a$bordering_language_richness + 0.5)
-# Do not transform zero entries for distance variables
-A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0] <- log(
-  A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0])
-A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0] <- log(
-  A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0])
-
-# --- Standardise predictors ---
-A3a$Range.Size..km2. <- scale(A3a$Range.Size..km2.)
-A3a$L1_pop <- scale(A3a$L1_pop)
-A3a$bordering_language_richness <- scale(A3a$bordering_language_richness)
-A3a$Distance.to.Mainland <- scale(A3a$Distance.to.Mainland)
-A3a$Distance.to.Continent <- scale(A3a$Distance.to.Continent)
 
 # --- Preview transformed data ---
 head(A3a)
@@ -820,7 +1006,7 @@ ggsave(
   height=5
 )
 
-# --- PISc ~ Range ---
+# --- PISc ~ Area ---
 # Regions labelled
 PIS_Range_Region <- ggplot(A3a, aes(x = Range.Size..km2., 
                                     y = Phoneme.Inventory.Size, 
@@ -858,7 +1044,7 @@ ggsave(
   height=5
 )
 
-# --- Get PISc ~ Range OLS, for each region ---
+# --- Get PISc ~ Area OLS, for each region ---
 PIS_Range_Region_Cor <- sapply(region_order, function(x) {
   cor(A3a$Range.Size..km2.[A3a$region==x], A3a$Phoneme.Inventory.Size[A3a$region==x])
 })
@@ -883,23 +1069,6 @@ cor(A3a[,
 raw_A3b <- read.csv("output/A3b/A3b_adjusted.csv")
 load("output/A3b/A3b_phylomatrix.RData")
 load("output/A3b/A3b_spmatrix.RData")
-
-# --- Log transform variables ---
-A3b <- raw_A3b
-A3b$Phoneme.Inventory.Size <- log(A3b$Phoneme.Inventory.Size) 
-A3b$Range.Size..km2. <- log(A3b$Range.Size..km2.)
-A3b$L1_pop <- log(A3b$L1_pop + 0.5)
-# Do not transform zero entries for distance variables
-A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0] <- log(
-  A3b$Distance.to.Mainland[A3b$Distance.to.Mainland != 0])
-A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0] <- log(
-  A3b$Distance.to.Continent[A3b$Distance.to.Continent != 0])
-
-# --- Standardise predictors ---
-A3b$Range.Size..km2. <- scale(A3b$Range.Size..km2.)
-A3b$L1_pop <- scale(A3b$L1_pop)
-A3b$Distance.to.Mainland <- scale(A3b$Distance.to.Mainland)
-A3b$Distance.to.Continent <- scale(A3b$Distance.to.Continent)
 
 # --- Preview transformed data ---
 head(A3b)
@@ -936,10 +1105,6 @@ raw_A4 <- read.csv("output/A4/A4_adjusted.csv")
 load("output/A4/A4_phylomatrix.RData")
 load("output/A4/A4_spmatrix.RData")
 
-# --- Log transform variables ---
-A4 <- raw_A4
-A4$Phoneme.Inventory.Size <- log(A4$Phoneme.Inventory.Size) 
-
 # --- Preview transformed data ---
 head(A4)
 summary(A4)
@@ -955,10 +1120,75 @@ PIS_Doc <- ggplot(data = A4, aes(x = as.factor(documentation), y = Phoneme.Inven
 print(PIS_Doc)
 ggsave(filename = "output/A4/PIS_Doc.png", plot = PIS_Doc)
 
-# --- (6) OLS AND GLS ANALYSIS --- ####
+## --- A5a --- ####
+# --- Mapping phoneme inventory sizes onto world map A1a ---
+# Get world map data
+PIS_world_map_2 <- ggplot() +
+  # Base world map
+  geom_polygon(
+    data = world,
+    aes(x = long, y = lat, group = group),
+    fill = "gray90", color = "gray50"
+  ) +
+  # Points with size and color based on count
+  geom_point(
+    data = A5a,
+    aes(x = Longitude, y = Latitude, color = Phoneme.Inventory.Size),
+    alpha = 0.7
+  ) +
+  scale_color_viridis_c(option="plasma") +
+  coord_fixed(1.3) +
+  theme_minimal() +
+  labs(x = "", y = "", color = "Log PISa")
+ggsave("output/A5a/PIS_world_map_2.png", plot = PIS_world_map_2, width = 15, height = 10, dpi = 300)
+PIS_world_map_2
 
-## Setup ####
-A1_model <- c(Phoneme.Inventory.Size ~ L1_pop)
+# --- Testing for region sampling bias of A5a (applies for A5b,A5c and A5d too) ---
+# number of repetitions
+n_rep = 1e4
+# Find number of languages in each region for A5a
+A5a_region_tally <- as.data.frame(table(A5a$region))
+A5a_region_tally <- A5a_region_tally[match(region_order, A5a_region_tally$Var1), ]
+region_sample_tallies <- data.frame(matrix(ncol = length(region_order), nrow = n_rep))
+colnames(region_sample_tallies) <- region_order # Set column names
+# Repeated n_rep times, randomly sample without replacement 
+for(i in 1:n_rep){
+  # Get region sample
+  region_sample <- sample(nee22$region, size = length(A5a$region), replace = FALSE)
+  # Current region tally.
+  region_sample_tally = table(region_sample)
+  # Add current tally to all tally data
+  region_sample_tallies[i, names(region_sample_tally)] <- as.numeric(region_sample_tally)
+}
+# Reshape the dataframe to long format
+A5a_region_sample_tallies_long <- pivot_longer(region_sample_tallies, everything(), names_to = c("Group"), values_to = 'Value')
+# Set 'Group' as a factor with levels in the desired order, this is to ensure that ggplot doesn't alphabetically sort the regions.
+A5a_region_sample_tallies_long$Group <- factor(A5a_region_sample_tallies_long$Group, levels = region_order)
+region_box <- ggplot(A5a_region_sample_tallies_long, aes(x = Group, y = Value)) +
+  geom_boxplot(varwidth = TRUE) +
+  geom_point(data = A5a_region_tally, 
+             aes(x = region_order, y = Freq), 
+             shape = 4,
+             size = 4) + 
+  geom_text(
+    data = A5a_region_tally,
+    aes(x = region_order, y = Freq, label = Freq),
+    vjust = 0.1,
+    hjust = 1.5,
+    size = 3.5
+  ) +
+  ylab("Number of Languages Sampled") +
+  xlab("Region") +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        axis.title.x.bottom = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        axis.title.y.left = element_text(size = 10))
+# Save graph
+ggsave("output/A5a/region_sampling.png", plot = region_box, width = 15, height = 15, dpi = 300, scale = 0.5)
+print(region_box)
+
+# --- (7) OLS AND GLS ANALYSIS --- ####
 
 ## --- A1a --- ####
 
@@ -971,7 +1201,7 @@ print(logLik(A1a_l1))
 # --- Best p values for all models A1a ---
 A1a_p.res <- sbplx(c(0.5, 0.5, 0.5),
                    best_p,
-                   formula=A1_model[[1]],
+                   formula=Phoneme.Inventory.Size ~ L1_pop,
                    data=A1a,
                    spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
                    lower=c(0,0,0),upper=c(1,1,1),
@@ -980,7 +1210,7 @@ A1a_p.res <- sbplx(c(0.5, 0.5, 0.5),
 save(A1a_p.res, file = "output/A1a/A1a_p_res.RData")
 
 # --- Maximum likelihood fits for all models A1a ---
-A1a_model <- ml_fit(p=A1a_p.res$par,formula=A1_model[[1]],data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix)
+A1a_model <- ml_fit(p=A1a_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix)
 # Save model fit
 save(A1a_model, file = "output/A1a/A1a_model.RData") 
 
@@ -995,7 +1225,7 @@ print(logLik(A1b_l1))
 # --- Best p values for all models A1b ---
 A1b_p.res <- sbplx(c(0.5, 0.5, 0.5),
                    best_p,
-                   formula=A1_model[[1]],
+                   formula=Phoneme.Inventory.Size ~ L1_pop,
                    data=A1b,
                    spmatrix=A1b_spmatrix,phylomatrix=A1b_phylomatrix,
                    lower=c(0,0,0),upper=c(1,1,1),
@@ -1004,7 +1234,7 @@ A1b_p.res <- sbplx(c(0.5, 0.5, 0.5),
 save(A1b_p.res, file = "output/A1b/A1b_p_res.RData")
 
 # --- Maximum likelihood fits for all models A1b ---
-A1b_model <- ml_fit(p=A1b_p.res$par,formula=A1_model[[1]],data=A1b,spmatrix=A1b_spmatrix,phylomatrix=A1b_phylomatrix)
+A1b_model <- ml_fit(p=A1b_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1b,spmatrix=A1b_spmatrix,phylomatrix=A1b_phylomatrix)
 # Save model fit
 save(A1b_model, file = "output/A1b/A1b_model.RData") 
 
@@ -1033,6 +1263,92 @@ for (i in 1:n_pred) {
   }
 }
 unlist(A2_models)
+
+# --- Linear regression fits for all models (no correction for autocorrelation) ---
+A2_fits_nc <- mclapply(
+  X = A2_models,
+  FUN = function(f){lm(data = A2, formula = f)},
+  mc.cores = 8
+)
+# Save models
+saveRDS(A2_fits_nc, "output/A2/A2_fits_nc.RDS") 
+
+# --- Model Comparison (for OLS) ---
+# Make empty NA list of coefficients and their respective p values in tuple form
+n <- length(A2_fits_nc)
+A2_summaries_nc <- list("Island.Endemic" = as.list(rep(NA,n)),
+                     "Range.Size..km2." = as.list(rep(NA,n)),
+                     "altitude_range" = as.list(rep(NA,n)), 
+                     "bordering_language_richness" = as.list(rep(NA,n)),
+                     "L1_pop" = as.list(rep(NA,n)))
+ml_logLik <- c()
+ml_BIC <- c()
+ml_AIC <- c()
+ml_MSE <- c()
+
+for (i in 1:n){
+  # get current model summary
+  ml_summary <- summary(A2_fits_nc[[i]])
+  # if intercept only model just get BIC, logLik and MLE
+  if(dim(ml_summary$coefficients)[1] == 1) {
+    ml_logLik <- c(ml_logLik, logLik(A2_fits_nc[[i]]) %>% as.numeric())
+    ml_BIC <- c(ml_BIC, BIC(A2_fits_nc[[i]]))
+    ml_AIC <- c(ml_AIC, AIC(A2_fits_nc[[i]]))
+    ml_MSE <- c(ml_MSE, sum(A2_fits_nc[[i]]$residuals**2)/dim(A2)[1])
+    next
+  }
+  # Get coefficient values
+  coef_val <- ml_summary$coefficients[,1]
+  # Get corresponding p-values
+  coef_p <- ml_summary$coefficients[,4]
+  # Get coefficient names
+  coef_names <- names(ml_summary$coefficients[,4])
+  # Get number of coefficients
+  n_coef <- length(coef_names)
+  # Add coef info into model_summaries
+  # for (j in 2:n_coef){
+  #   if(coef_p[j]<=0.05){
+  #     A2_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
+  #   } else {
+  #     A2_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
+  #   }
+  # }
+  for (j in 2:n_coef){
+    A2_summaries_nc[[coef_names[j]]][[i]] <- paste0(round(coef_val[j],4),",",round(coef_p[j],4))
+  }
+  # Add BIC, logLik and MLE
+  ml_logLik <- c(ml_logLik, logLik(A2_fits_nc[[i]]) %>% as.numeric())
+  ml_BIC <- c(ml_BIC, BIC(A2_fits_nc[[i]]))
+  ml_AIC <- c(ml_AIC, AIC(A2_fits_nc[[i]]))
+  ml_MSE <- c(ml_MSE, sum(A2_fits_nc[[i]]$residuals**2)/dim(A2)[1])
+}
+
+# Create new data frame from lists
+A2_ml_data_nc <- data.frame(BIC = ml_BIC,
+                         AIC = ml_AIC,
+                         logLik = ml_logLik,
+                         MSE = ml_MSE,
+                         unlist(A2_summaries_nc$Island.Endemic),
+                         unlist(A2_summaries_nc$Range.Size..km2.),
+                         unlist(A2_summaries_nc$altitude_range),
+                         unlist(A2_summaries_nc$bordering_language_richness),
+                         unlist(A2_summaries_nc$L1_pop),
+                         stringsAsFactors = FALSE)
+colnames(A2_ml_data_nc) <- c("BIC", "AIC", "logLik", "MSE", A2_predictors)
+# Sort based on increasing BIC
+A2_ml_data_BIC_nc <- A2_ml_data_nc[order(A2_ml_data_nc$BIC), ]
+# Add delta BIC column (min_BIC - current_BIC)
+min_BIC <-  min(A2_ml_data_BIC_nc$BIC)
+A2_ml_data_BIC_nc$deltaBIC <- A2_ml_data_BIC_nc$BIC - min_BIC
+# Save output
+write.csv(A2_ml_data_BIC_nc, file = "output/A2/A2_ml_data_BIC_nc.csv", row.names=FALSE)
+# Sort based on increasing AIC
+A2_ml_data_AIC_nc <- A2_ml_data_nc[order(A2_ml_data_nc$AIC), ]
+# Add delta AIC column (min_AIC - current_AIC)
+min_AIC <-  min(A2_ml_data_AIC_nc$AIC)
+A2_ml_data_AIC_nc$deltaAIC <- A2_ml_data_AIC_nc$AIC - min_AIC
+# Save output
+write.csv(A2_ml_data_AIC_nc, file = "output/A2/A2_ml_data_AIC_nc.csv", row.names=FALSE)
 
 # --- Best p values for all models ---
 A2_p.res <- sbplx(c(0.5, 0.5, 0.5),
@@ -1137,7 +1453,10 @@ write.csv(A2_ml_data_AIC, file = "output/A2/A2_ml_data_AIC.csv", row.names=FALSE
 
 ## --- A3a --- ####
 
-# --- Get PISc ~ Range OLS ---
+# --- Get PISc ~ L1_pop OLS ---
+A3a_l1 <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A3a)
+
+# --- Get PISc ~ Area OLS ---
 A3a_PIS_Range_l1 = lm(data=A3a, Phoneme.Inventory.Size ~ Range.Size..km2.)
 summary(A3a_PIS_Range_l1)
 # For each region
@@ -1398,7 +1717,371 @@ A4_model <- ml_fit(p=A4_p.res$par,formula=A4_model[[1]],data=A4,spmatrix=A4_spma
 # Save model fit
 save(A4_model, file = "output/A4/A4_model.RData") 
 
-# --- (7) REFERENCES --- ####
+## --- A5a --- ####
+
+# --- Ordinary Least Squares A5a ---
+A5a_l1 <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A5a)
+print(summary(A5a_l1))
+print(BIC(A5a_l1))
+print(logLik(A5a_l1))
+
+# --- Best p values for all models A5a ---
+A5a_p.res <- sbplx(c(0.5, 0.5, 0.5),
+                   best_p,
+                   formula=Phoneme.Inventory.Size ~ L1_pop,
+                   data=A5a,
+                   spmatrix=A5a_spmatrix,phylomatrix=A5a_phylomatrix,
+                   lower=c(0,0,0),upper=c(1,1,1),
+                   nl.info = TRUE)
+# Save p.res
+save(A5a_p.res, file = "output/A5a/A5a_p_res.RData")
+
+# --- Maximum likelihood fits for all models A5a ---
+A5a_model <- ml_fit(p=A5a_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A5a,spmatrix=A5a_spmatrix,phylomatrix=A5a_phylomatrix)
+# Save model fit
+save(A5a_model, file = "output/A5a/A5a_model.RData")
+
+## --- A5b --- ####
+
+# --- Ordinary Least Squares ---
+A5b_l1 <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A5b)
+print(summary(A5b_l1))
+print(BIC(A5b_l1))
+print(logLik(A5b_l1))
+
+# --- Model predictor combinations ---
+A5b_predictors <- c("Island.Endemic", "Range.Size..km2.",
+                   "altitude_range", "bordering_language_richness",
+                   "L1_pop")
+response <- "Phoneme.Inventory.Size"
+n_pred <- length(A5b_predictors)
+pred_combs <- sapply(1:n_pred, function(x) combn(A5b_predictors, x))
+A5b_models <- c(Phoneme.Inventory.Size ~ 1)
+for (i in 1:n_pred) {
+  for (j in 1:dim(pred_combs[[i]])[2]) {
+    combination <- pred_combs[[i]][,j]
+    model <- (paste(response, paste(combination, collapse="+"), sep="~"))
+    model <- as.formula(model)
+    A5b_models <- c(A5b_models,model)
+  }
+}
+unlist(A5b_models)
+
+# --- Best p values for all models ---
+A5b_p.res <- sbplx(c(0.5, 0.5, 0.5),
+                  best_p,
+                  formula=Phoneme.Inventory.Size~1,
+                  data=A5b,
+                  spmatrix=A5b_spmatrix,phylomatrix=A5b_phylomatrix,
+                  lower=c(0,0,0),upper=c(1,1,1),
+                  nl.info = TRUE)
+# Save p.res and covariance matrix
+save(A5b_p.res, file = "output/A5b/A5b_p_res.RData")
+spmatrix_temp <- A5b_spmatrix/max(A5b_spmatrix)
+spmatrix_temp <- exp(-(spmatrix_temp/A5b_p.res$par[2])^2)
+A5b_mat <- as.matrix((A5b_p.res$par[3]*(1-A5b_p.res$par[1])*spmatrix_temp+(1-A5b_p.res$par[1])*(1-A5b_p.res$par[3])*A5b_phylomatrix+A5b_p.res$par[1]*diag(dim(A5b_phylomatrix)[1])))
+save(A5b_mat, file = "output/A5b/A5b_mat.RData")
+
+# --- Maximum likelihood fits for all models ---
+A5b_fits <- mclapply(
+  X = A5b_models,
+  FUN = function(f) ml_fit(p=A5b_p.res$par,formula=f,data=A5b,spmatrix=A5b_spmatrix,phylomatrix=A5b_phylomatrix),
+  mc.cores = 8
+)
+# Save models
+saveRDS(A5b_fits, "output/A5b/A5b_fits.RDS") 
+
+# --- Model Comparison ---
+# Make empty NA list of coefficients and their respective p values in tuple form
+n <- length(A5b_fits)
+A5b_summaries <- list("Island.Endemic" = as.list(rep(NA,n)),
+                     "Range.Size..km2." = as.list(rep(NA,n)),
+                     "altitude_range" = as.list(rep(NA,n)), 
+                     "bordering_language_richness" = as.list(rep(NA,n)),
+                     "L1_pop" = as.list(rep(NA,n)))
+ml_logLik <- c()
+ml_BIC <- c()
+ml_AIC <- c()
+ml_MSE <- c()
+
+for (i in 1:n){
+  # get current model summary
+  ml_summary <- summary(A5b_fits[[i]])
+  # if intercept only model just get BIC, logLik and MLE
+  if(dim(ml_summary$tTable)[1] == 1) {
+    ml_logLik <- c(ml_logLik, ml_summary$logLik)
+    ml_BIC <- c(ml_BIC, ml_summary$BIC)
+    ml_AIC <- c(ml_AIC, ml_summary$AIC)
+    ml_MSE <- c(ml_MSE, sum(A5b_fits[[i]]$residuals**2)/dim(A5b)[1])
+    next
+  }
+  # Get coefficient values
+  coef_val <- ml_summary$tTable[,1]
+  # Get corresponding p-values
+  coef_p <- ml_summary$tTable[,4]
+  # Get coefficient names
+  coef_names <- names(ml_summary$tTable[,4])
+  # Get number of coefficients
+  n_coef <- length(coef_names)
+  # Add coef info into model_summaries
+  # for (j in 2:n_coef){
+  #   if(coef_p[j]<=0.05){
+  #     A5b_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
+  #   } else {
+  #     A5b_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
+  #   }
+  # }
+  for (j in 2:n_coef){
+    A5b_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j],4),",",round(coef_p[j],4))
+  }
+  # Add BIC, logLik and MLE
+  ml_logLik <- c(ml_logLik, ml_summary$logLik)
+  ml_BIC <- c(ml_BIC, ml_summary$BIC)
+  ml_AIC <- c(ml_AIC, ml_summary$AIC)
+  ml_MSE <- c(ml_MSE, sum(A5b_fits[[i]]$residuals**2)/dim(A5b)[1])
+}
+
+# Create new data frame from lists
+A5b_ml_data <- data.frame(BIC = ml_BIC,
+                         AIC = ml_AIC,
+                         logLik = ml_logLik,
+                         MSE = ml_MSE,
+                         unlist(A5b_summaries$Island.Endemic),
+                         unlist(A5b_summaries$Range.Size..km2.),
+                         unlist(A5b_summaries$altitude_range),
+                         unlist(A5b_summaries$bordering_language_richness),
+                         unlist(A5b_summaries$L1_pop),
+                         stringsAsFactors = FALSE)
+colnames(A5b_ml_data) <- c("BIC", "AIC", "logLik", "MSE", A5b_predictors)
+# Sort based on increasing BIC
+A5b_ml_data_BIC <- A5b_ml_data[order(A5b_ml_data$BIC), ]
+# Add delta BIC column (min_BIC - current_BIC)
+min_BIC <-  min(A5b_ml_data_BIC$BIC)
+A5b_ml_data_BIC$deltaBIC <- A5b_ml_data_BIC$BIC - min_BIC
+# Save output
+write.csv(A5b_ml_data_BIC, file = "output/A5b/A5b_ml_data_BIC.csv", row.names=FALSE)
+# Sort based on increasing AIC
+A5b_ml_data_AIC <- A5b_ml_data[order(A5b_ml_data$AIC), ]
+# Add delta AIC column (min_AIC - current_AIC)
+min_AIC <-  min(A5b_ml_data_AIC$AIC)
+A5b_ml_data_AIC$deltaAIC <- A5b_ml_data_AIC$AIC - min_AIC
+# Save output
+write.csv(A5b_ml_data_AIC, file = "output/A5b/A5b_ml_data_AIC.csv", row.names=FALSE)
+
+## --- A5c --- ####
+
+# --- Get PISc ~ Area OLS ---
+A5c_PIS_Range_l1 = lm(data=A5c, Phoneme.Inventory.Size ~ Range.Size..km2.)
+summary(A5c_PIS_Range_l1)
+# For each region
+A5c_PIS_Range_Region_lm <- lapply(region_order, function(x) {
+  summary(lm(data=A5c, A5c$Phoneme.Inventory.Size[A5c$region==x] ~ A5c$Range.Size..km2.[A5c$region==x]))
+})
+# For each region with only non-island languages
+A5c_PIS_NI_Range_Region_lm <- lapply(region_order, function(x) {
+  summary(lm(data=A5c,
+             A5c$Phoneme.Inventory.Size[A5c$region==x & A5c$Island.Endemic == 0] ~ A5c$Range.Size..km2.[A5c$region==x  & A5c$Island.Endemic == 0]))
+})
+# For only Oceania region island languages
+A5c_PIS_Range_l2 = lm(data=A5c[A5c$region == "Oceania" & A5c$Island.Endemic == 1,], Phoneme.Inventory.Size ~ Range.Size..km2.)
+
+# --- Model predictor combinations ---
+A5c_predictors <- c("Island.Endemic" ,"Range.Size..km2.",
+                    "Distance.to.Mainland", "Distance.to.Continent",
+                    "L1_pop")
+response <- "Phoneme.Inventory.Size"
+n_pred <- length(A5c_predictors)
+pred_combs <- sapply(1:n_pred, function(x) combn(A5c_predictors, x))
+A5c_models <- c(Phoneme.Inventory.Size~1)
+for (i in 1:n_pred) {
+  #print(pred_combs[[i]])
+  for (j in 1:dim(pred_combs[[i]])[2]) {
+    model <- (paste(response, paste(pred_combs[[i]][,j], collapse="+"), sep="~"))
+    model <- as.formula(model)
+    A5c_models <- c(A5c_models,model)
+  }
+}
+
+# --- Best p values for all models ---
+A5c_p.res <- sbplx(c(0.5, 0.5, 0.5),
+                   best_p,
+                   formula=Phoneme.Inventory.Size~1,
+                   data=A5c,
+                   spmatrix=A5c_spmatrix,phylomatrix=A5c_phylomatrix,
+                   lower=c(0,0,0),upper=c(1,1,1),
+                   nl.info = TRUE)
+# Save p.res and covariance matrix
+save(A5c_p.res, file = "output/A5c/A5c_p_res.RData")
+spmatrix_temp <- A5c_spmatrix/max(A5c_spmatrix)
+spmatrix_temp <- exp(-(spmatrix_temp/A5c_p.res$par[2])^2)
+A5c_mat <- as.matrix((A5c_p.res$par[3]*(1-A5c_p.res$par[1])*spmatrix_temp+(1-A5c_p.res$par[1])*(1-A5c_p.res$par[3])*A5c_phylomatrix+A5c_p.res$par[1]*diag(dim(A5c_phylomatrix)[1])))
+save(A5c_mat, file = "output/A5c/A5c_mat.RData")
+
+# --- Maximum likelihood fits for all models ---
+A5c_fits <- mclapply(
+  X = A5c_models,
+  FUN = function(f) ml_fit(p=A5c_p.res$par,formula=f,data=A5c,spmatrix=A5c_spmatrix,phylomatrix=A5c_phylomatrix),
+  mc.cores = 8
+)
+# Save models
+saveRDS(A5c_fits, "output/A5c/A5c_fits.RDS") 
+
+# --- Model Comparison ---
+# Make empty NA list of coefficients and their respective p values in tuple form
+n <- length(A5c_fits)
+A5c_summaries <- list("Island.Endemic" = as.list(rep(NA,n)),
+                      "Range.Size..km2." = as.list(rep(NA,n)),
+                      "Distance.to.Mainland" = as.list(rep(NA,n)), 
+                      "Distance.to.Continent" = as.list(rep(NA,n)),
+                      "L1_pop" = as.list(rep(NA,n)))
+ml_logLik <- c()
+ml_BIC <- c()
+ml_AIC <- c()
+ml_MSE <- c()
+
+for (i in 1:n){
+  # get current model summary
+  ml_summary <- summary(A5c_fits[[i]])
+  # if intercept only model just get BIC, logLik and MLE
+  if(dim(ml_summary$tTable)[1] == 1) {
+    ml_logLik <- c(ml_logLik, ml_summary$logLik)
+    ml_BIC <- c(ml_BIC, ml_summary$BIC)
+    ml_AIC <- c(ml_AIC, ml_summary$AIC)
+    ml_MSE <- c(ml_MSE, sum(A5c_fits[[i]]$residuals**2)/dim(A5c)[1])
+    next
+  }
+  # Get coefficient values
+  coef_val <- ml_summary$tTable[,1]
+  # Get corresponding p-values
+  coef_p <- ml_summary$tTable[,4]
+  # Get coefficient names
+  coef_names <- names(ml_summary$tTable[,4])
+  # Get number of coefficients
+  n_coef <- length(coef_names)
+  # Add coef info into model_summaries
+  # for (j in 2:n_coef){
+  #   if(coef_p[j]<=0.05){
+  #     A5c_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5),"***")
+  #   } else {
+  #     A5c_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j], 5))
+  #   }
+  # }
+  for (j in 2:n_coef){
+    A5c_summaries[[coef_names[j]]][[i]] <- paste0(round(coef_val[j],4),",",round(coef_p[j],4))
+  }
+  # Add BIC, logLik and MLE
+  ml_logLik <- c(ml_logLik, ml_summary$logLik)
+  ml_BIC <- c(ml_BIC, ml_summary$BIC)
+  ml_AIC <- c(ml_AIC, ml_summary$AIC)
+  ml_MSE <- c(ml_MSE, sum(A5c_fits[[i]]$residuals**2)/dim(A5c)[1])
+}
+
+# Create new data frame from lists
+A5c_ml_data <- data.frame(BIC = ml_BIC,
+                          AIC = ml_AIC,
+                          logLik = ml_logLik,
+                          MSE = ml_MSE,
+                          unlist(A5c_summaries$Island.Endemic),
+                          unlist(A5c_summaries$Range.Size..km2.),
+                          unlist(A5c_summaries$Distance.to.Mainland),
+                          unlist(A5c_summaries$Distance.to.Continent),
+                          unlist(A5c_summaries$L1_pop),
+                          stringsAsFactors = FALSE)
+colnames(A5c_ml_data) <- c("BIC", "AIC", "logLik", "MSE", A5c_predictors)
+# Sort based on increasing BIC
+A5c_ml_data_BIC <- A5c_ml_data[order(A5c_ml_data$BIC), ]
+# Add delta BIC column (min_BIC - current_BIC)
+min_BIC <-  min(A5c_ml_data_BIC$BIC)
+A5c_ml_data_BIC$deltaBIC <- A5c_ml_data_BIC$BIC - min_BIC
+# Save output
+write.csv(A5c_ml_data_BIC, file = "output/A5c/A5c_ml_data_BIC.csv", row.names=FALSE)
+# Sort based on increasing AIC
+A5c_ml_data_AIC <- A5c_ml_data[order(A5c_ml_data$AIC), ]
+# Add delta AIC column (min_AIC - current_AIC)
+min_AIC <-  min(A5c_ml_data$AIC)
+A5c_ml_data_AIC$deltaAIC <- A5c_ml_data_AIC$AIC - min_AIC
+# Save output
+write.csv(A5c_ml_data_AIC, file = "output/A5c/A5c_ml_data_AIC.csv", row.names=FALSE)
+
+## --- A5d --- ####
+
+# --- Model predictor combinations ---
+A5d_model <- c(Phoneme.Inventory.Size ~ documentation)
+
+# --- Best p values for all models ---
+A5d_p.res <- sbplx(c(0.5, 0.5, 0.5),
+                  best_p,
+                  formula=A5d_model[[1]],
+                  data=A5d,
+                  spmatrix=A5d_spmatrix,phylomatrix=A5d_phylomatrix,
+                  lower=c(0,0,0),upper=c(1,1,1),
+                  nl.info = TRUE)
+# Save p.res and covariance matrix
+save(A5d_p.res, file = "output/A5d/A5d_p_res.RData")
+spmatrix_temp <- A5d_spmatrix/max(A5d_spmatrix)
+spmatrix_temp <- exp(-(spmatrix_temp/A5d_p.res$par[2])^2)
+mat <- as.matrix((A5d_p.res$par[3]*(1-A5d_p.res$par[1])*spmatrix_temp+(1-A5d_p.res$par[1])*(1-A5d_p.res$par[3])*A5d_phylomatrix+A5d_p.res$par[1]*diag(dim(A5d_phylomatrix)[1])))
+
+# --- Maximum likelihood fits for all models A1b ---
+A5d_model <- ml_fit(p=A5d_p.res$par,formula=A5d_model[[1]],data=A5d,spmatrix=A5d_spmatrix,phylomatrix=A5d_phylomatrix)
+# Save model fit
+save(A5d_model, file = "output/A5d/A5d_model.RData") 
+
+# --- (8) RESULTS PLOTS --- ####
+
+## --- A1a --- ####
+
+# Show regression lines (with and without correction for autocorrelation)
+PISa_L1_pop_wr = ggplot(A1a, aes(x = L1_pop, y = Phoneme.Inventory.Size, color = factor(region, levels = region_order))) + 
+  geom_point() + 
+  geom_abline(intercept = A1a_l1$coefficients[1], slope = A1a_l1$coefficients[2],
+              color = "red", linewidth = 1) +
+  geom_abline(intercept = A1a_model$coefficients[1], slope = A1a_model$coefficients[2],
+              color = "blue", linewidth = 1) +
+  labs(x = "L1_pop", y = "PISa", color = "Region") + 
+  scale_color_manual(values = region_colours) +
+  theme_minimal()
+# Save graph
+ggsave("output/A1a/PISa_L1_pop_wr.png", plot = PISa_L1_pop_wr, width = 15, height = 10, dpi = 100,scale = 0.5)
+# Show graph
+print(PISa_L1_pop_wr)
+
+## --- A3a --- ####
+
+# --- PISc ~ L1_pop ---
+# Show regression lines (with and without correction for autocorrelation)
+PISc_L1_pop_wr = ggplot(A3a, aes(x = L1_pop, y = Phoneme.Inventory.Size, color = factor(region, levels = region_order))) + 
+  geom_point() + 
+  geom_abline(intercept = A3a_l1$coefficients[1], slope = A3a_l1$coefficients[2],
+              color = "red", linewidth = 1) +
+  geom_abline(intercept = A3a_fits[[6]]$coefficients[1], slope = A3a_fits[[6]]$coefficients[2],
+              color = "blue", linewidth = 1) +
+  labs(x = "L1_pop", y = "PISc", color = "Region") + 
+  scale_color_manual(values = region_colours) +
+  theme_minimal()
+# Save graph
+ggsave("output/A3a/PISc_L1_pop_wr.png", plot = PISc_L1_pop_wr, width = 15, height = 10, dpi = 100,scale = 0.5)
+# Show graph
+print(PISc_L1_pop_wr)
+
+# --- PISc ~ Area ---
+# Show regression lines (with and without correction for autocorrelation)
+PISc_Area_wr = ggplot(A3a, aes(x = Range.Size..km2., y = Phoneme.Inventory.Size, color = factor(region, levels = region_order))) + 
+  geom_point() + 
+  geom_abline(intercept = A3a_PIS_Range_l1$coefficients[1], slope = A3a_PIS_Range_l1$coefficients[2],
+              color = "red", linewidth = 1) +
+  geom_abline(intercept = A3a_fits[[3]]$coefficients[1], slope = A3a_fits[[3]]$coefficients[2],
+              color = "blue", linewidth = 1) +
+  labs(x = "Area", y = "PISc", color = "Region") + 
+  scale_color_manual(values = region_colours) +
+  theme_minimal()
+# Save graph
+ggsave("output/A3a/PISc_Area_wr.png", plot = PISc_Area_wr, width = 15, height = 10, dpi = 100,scale = 0.5)
+# Show graph
+print(PISc_Area_wr)
+
+
+# --- (9) REFERENCES --- ####
 #
 # (1) Bromham, L., Yaxley, K.J. & Cardillo, M. Islands are engines of language diversity. Nat Ecol Evol 8, 1991–2002 (2024). https://doi.org/10.1038/s41559-024-02488-4
 # 
