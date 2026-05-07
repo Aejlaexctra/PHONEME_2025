@@ -291,6 +291,27 @@ A5d <- A5d[A5d$ISO %in% common_ids, ] # Remove languages with ISO codes not comm
 A5d_phylomatrix <- phylomatrix[common_ids, common_ids]
 A5d_spmatrix <- spmatrix[common_ids, common_ids]
 
+## --- A6 --- ####
+
+# --- Prepare dataset ---
+# Merge datasets
+A6 <- merge(nee22[, c("ISO", "region", "documentation")], 
+            nee24[, c("ISO693.3", "Phoneme.Inventory.Size","L1_pop")], 
+            by.x = "ISO", by.y = "ISO693.3", all.x = TRUE)
+# Remove all NA entries
+A6 <- na.omit(A6) 
+paste("Size of dataset with NA remove:", dim(A6)[1])
+
+# --- Adjusting A4 data with matrices ---
+common_ids <- Reduce(intersect, list(
+  A4$ISO,
+  rownames(phylomatrix),
+  rownames(spmatrix)
+))
+A6 <- A6[A6$ISO %in% common_ids, ]
+A6_phylomatrix <- phylomatrix[common_ids, common_ids]
+A6_spmatrix <- spmatrix[common_ids, common_ids]
+
 # --- (4) EXPORT DATASETS FOR ANALYSIS --- ####
 
 ## --- A1a --- ####
@@ -450,6 +471,21 @@ print(A5d_spmatrix[1:10,1:10])
 save(A5d_phylomatrix, file = "output/A5d/A5d_phylomatrix.RData") 
 save(A5d_spmatrix, file = "output/A5d/A5d_spmatrix.RData")
 
+## --- A6 --- ####
+
+# Preview and save data
+paste("Size of dataset adjusted:", dim(A6)[1])
+# save data 
+write.csv(A6, file = "output/A6/A6_adjusted.csv", row.names=FALSE)
+
+# Preview and save matrices
+print(dim(A6_phylomatrix))
+print(dim(A6_spmatrix))
+print(A6_phylomatrix[1:10,1:10])
+print(A6_spmatrix[1:10,1:10])
+save(A6_phylomatrix, file = "output/A6/A6_phylomatrix.RData") 
+save(A6_spmatrix, file = "output/A6/A6_spmatrix.RData")
+
 # --- (5) TRANSFORM VARIABLES --- ####
 
 ## --- A1a --- ####
@@ -558,6 +594,9 @@ A5c$Distance.to.Continent <- scale(A5c$Distance.to.Continent)
 ## --- A5d --- ####
 A5d$Phoneme.Inventory.Size <- log(A5d$Phoneme.Inventory.Size) 
 
+## --- A6 --- ####
+A6$L1_pop <- log(A6$L1_pop + 0.5) 
+
 # --- (6) DATASET VISUALISATION --- ####
 
 ## Setup ####
@@ -588,6 +627,7 @@ if(!exists("nee22")){
 ## --- A1a --- ####
 
 # --- Preview raw data A1a ---
+raw_A1a <- read.csv("output/A1a/A1a_adjusted.csv")
 head(raw_A1a)
 summary(raw_A1a)
 # Phoneme Inventory Size distribution
@@ -612,25 +652,27 @@ print(PIS_hist)
 # --- Mapping phoneme inventory sizes onto world map A1a ---
 # Get world map data
 world <- map_data("world")
-PIS_world_map <-ggplot() +
+world <- world[world$region != "Antarctica",]
+PIS_world_map <- ggplot() +
   # Base world map
   geom_polygon(
     data = world,
     aes(x = long, y = lat, group = group),
-    fill = "gray90", color = "gray50"
+    fill = "gray80", color = "gray80"
   ) +
   # Points with size and color based on count
   geom_point(
     data = A1a,
+    # aes(x = Longitude, y = Latitude, color = Phoneme.Inventory.Size, size = L1_pop),
     aes(x = Longitude, y = Latitude, color = Phoneme.Inventory.Size),
     alpha = 0.7
   ) +
   scale_color_viridis_c(option="plasma") +
   coord_fixed(1.3) +
-  theme_minimal() +
-  labs(x = "", y = "", color = "Log PISa")
-ggsave("output/A1a/PIS_world_map.png", plot = PIS_world_map, width = 15, height = 10, dpi = 300)
+  theme_minimal(base_size = 20) +
+  labs(x = NULL, y = NULL, color = "Log PISa", size = "Log L1_pop")
 PIS_world_map
+ggsave("output/A1a/PIS_world_map.png", plot = PIS_world_map, width = 15, height = 10, dpi = 300)
 
 # --- Preview correlations A1a ---
 # Plot data
@@ -1188,18 +1230,43 @@ region_box <- ggplot(A5a_region_sample_tallies_long, aes(x = Group, y = Value)) 
 ggsave("output/A5a/region_sampling.png", plot = region_box, width = 15, height = 15, dpi = 300, scale = 0.5)
 print(region_box)
 
+## --- A6 --- ####
+
+# Get raw A4 adjusted data and matrices
+raw_A6 <- read.csv("output/A6/A6_adjusted.csv")
+load("output/A6/A6_phylomatrix.RData")
+load("output/A6/A6_spmatrix.RData")
+
+# --- Preview transformed data ---
+head(A6)
+summary(A6)
+print("Number of languages for each documentation level:")
+print(table(A6$documentation))
+
+# --- Preview correlations ---
+# L1_pop ~ Documentation
+L1_pop_Doc <- ggplot(data = A6, aes(x = as.factor(documentation), y = L1_pop)) +
+  geom_boxplot() +
+  labs(x = "Documentation", y = "L1_pop") + 
+  theme_classic()
+print(L1_pop_Doc)
+ggsave(filename = "output/A6/L1_pop_Doc.png", plot = L1_pop_Doc)
+
 # --- (7) OLS AND GLS ANALYSIS --- ####
 
 ## --- A1a --- ####
 
-# --- Ordinary Least Squares A1a ---
-A1a_l1 <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A1a)
-print(summary(A1a_l1))
-print(BIC(A1a_l1))
-print(logLik(A1a_l1))
+# Models for Phoneme.Inventory.Size ~ L1_pop
 
-# --- Best p values for all models A1a ---
-A1a_p.res <- sbplx(c(0.5, 0.5, 0.5),
+# --- Ordinary Least Squares A1a ---
+A1a_OLS <- lm(formula = Phoneme.Inventory.Size ~ L1_pop, data = A1a)
+A1a_OLS_null <- lm(formula = Phoneme.Inventory.Size ~ 1, data = A1a)
+print(summary(A1a_OLS))
+print(BIC(A1a_OLS))
+print(logLik(A1a_OLS))
+
+# --- Best p values for model A1a ---
+A1a_GLS_p.res <- sbplx(c(0.5, 0.5, 0.5),
                    best_p,
                    formula=Phoneme.Inventory.Size ~ L1_pop,
                    data=A1a,
@@ -1207,12 +1274,35 @@ A1a_p.res <- sbplx(c(0.5, 0.5, 0.5),
                    lower=c(0,0,0),upper=c(1,1,1),
                    nl.info = TRUE)
 # Save p.res
-save(A1a_p.res, file = "output/A1a/A1a_p_res.RData")
+save(A1a_GLS_p.res, file = "output/A1a/A1a_GLS_p_res.RData")
 
-# --- Maximum likelihood fits for all models A1a ---
-A1a_model <- ml_fit(p=A1a_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix)
+# --- Maximum likelihood fits A1a GLS ---
+A1a_GLS_model <- ml_fit(p=A1a_GLS_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix)
 # Save model fit
-save(A1a_model, file = "output/A1a/A1a_model.RData") 
+save(A1a_GLS_model, file = "output/A1a/A1a_GLS_model.RData") 
+
+# --- Best p values for null of model A1a GLS ---
+A1a_GLS_null_p.res <- sbplx(c(0.5, 0.5, 0.5),
+                   best_p,
+                   formula=Phoneme.Inventory.Size ~ 1,
+                   data=A1a,
+                   spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
+                   lower=c(0,0,0),upper=c(1,1,1),
+                   nl.info = TRUE)
+# Save p.res
+save(A1a_GLS_null_p.res, file = "output/A1a/A1a_GLS_null_p_res.RData")
+
+# --- Nagelkerke/Cragg-Uhler Pseudo-R^2 of OLS and GLS ---
+# (1) OLS
+A1a_OLS_nll <- - logLik(A1a_OLS) %>% as.numeric # Negative log likelihood of full model
+A1a_OLS_null_nll <- -logLik(A1a_OLS_null) %>% as.numeric # Negative loglikelihood of null model
+A1a_OLS_R2 <- (1-exp(A1a_OLS_nll - A1a_OLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_OLS_null_nll)^(2/dim(A1a)[1]))
+# (2) GLS
+A1a_GLS_nll <- A1a_GLS_p.res$value # Negative log likelihood of full model
+A1a_GLS_null_nll <- A1a_GLS_null_p.res$value # Negative loglikelihood of null model
+A1a_GLS_R2 <- (1-exp(A1a_GLS_nll-A1a_GLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_GLS_null_nll)^(2/dim(A1a)[1]))
+# (3) Using OLS null against full GLS
+A1a_GLS_v2_R2 <-  (1-exp(A1a_GLS_nll-A1a_OLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_OLS_null_nll)^(2/dim(A1a)[1]))
 
 ## --- A1b --- ####
 
@@ -1253,13 +1343,18 @@ A2_predictors <- c("Island.Endemic", "Range.Size..km2.",
 response <- "Phoneme.Inventory.Size"
 n_pred <- length(A2_predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(A2_predictors, x))
-A2_models <- c(Phoneme.Inventory.Size ~ 1)
+A2_models <- c(Phoneme.Inventory.Size ~ 1) # List of models
+A2_models_var <- list() # List of predictors for each model
+A2_models_var[[1]] <- character(0) # Intercept model
+k <- 2
 for (i in 1:n_pred) {
   for (j in 1:dim(pred_combs[[i]])[2]) {
     combination <- pred_combs[[i]][,j]
+    A2_models_var[[k]] <- combination
     model <- (paste(response, paste(combination, collapse="+"), sep="~"))
     model <- as.formula(model)
     A2_models <- c(A2_models,model)
+    k <- k + 1
   }
 }
 unlist(A2_models)
@@ -1374,6 +1469,24 @@ A2_fits <- mclapply(
 # Save models
 saveRDS(A2_fits, "output/A2/A2_fits.RDS") 
 
+# --- BMA and PIP for all models ---
+logp <- sapply(A2_fits,function (i) -BIC(i)/2)
+pp <- exp(logp-max(logp)) 
+pp <- A2_pp/sum(pp) 
+beta <- lapply(1:length(A2_fits),function (j) {
+  coef <- A2_fits[[j]]$coefficients[-1] #assuming intercept is the first element in coefficients
+  names(coef) <- A2_models_var[[j]]
+  coef
+})
+A2_bma <- A2_pip <- rep(NA,length(A2_predictors))
+names(A2_bma) <- names(A2_pip) <- A2_predictors
+for (var in A2_predictors) {
+  idx <- sapply(1:length(A2_fits),function (i) is.element(var,A2_models_var[[i]]))
+  beta_var <- sapply(which(idx),function (i) beta[[i]][names(beta[[i]])==var])
+  A2_bma[var] <- sum(beta_var*pp[idx])
+  A2_pip[var] <- sum(pp[idx])
+}
+
 # --- Model Comparison ---
 # Make empty NA list of coefficients and their respective p values in tuple form
 n <- length(A2_fits)
@@ -1479,12 +1592,18 @@ response <- "Phoneme.Inventory.Size"
 n_pred <- length(A3a_predictors)
 pred_combs <- sapply(1:n_pred, function(x) combn(A3a_predictors, x))
 A3a_models <- c(Phoneme.Inventory.Size~1)
+A3a_models_var <- list() # List of predictors for each model
+A3a_models_var[[1]] <- character(0) # Intercept model
+k <- 2
 for (i in 1:n_pred) {
   #print(pred_combs[[i]])
   for (j in 1:dim(pred_combs[[i]])[2]) {
-    model <- (paste(response, paste(pred_combs[[i]][,j], collapse="+"), sep="~"))
+    combination <- pred_combs[[i]][,j]
+    A3a_models_var[[k]] <- combination
+    model <- (paste(response, paste(combination, collapse="+"), sep="~"))
     model <- as.formula(model)
     A3a_models <- c(A3a_models,model)
+    k <- k + 1
   }
 }
 
@@ -1511,6 +1630,24 @@ A3a_fits <- mclapply(
 )
 # Save models
 saveRDS(A3a_fits, "output/A3a/A3a_fits.RDS") 
+
+# --- BMA and PIP for all models ---
+logp <- sapply(A3a_fits,function (i) -BIC(i)/2)
+pp <- exp(logp-max(logp)) 
+pp <- A2_pp/sum(pp) 
+beta <- lapply(1:length(A3a_fits),function (j) {
+  coef <- A3a_fits[[j]]$coefficients[-1] #assuming intercept is the first element in coefficients
+  names(coef) <- A3a_models_var[[j]]
+  coef
+})
+A3a_bma <- A3a_pip <- rep(NA,length(A2_predictors))
+names(A3a_bma) <- names(A3a_pip) <- A3a_predictors
+for (var in A3a_predictors) {
+  idx <- sapply(1:length(A3a_fits),function (i) is.element(var,A3a_models_var[[i]]))
+  beta_var <- sapply(which(idx),function (i) beta[[i]][names(beta[[i]])==var])
+  A3a_bma[var] <- sum(beta_var*pp[idx])
+  A3a_pip[var] <- sum(pp[idx])
+}
 
 # --- Model Comparison ---
 # Make empty NA list of coefficients and their respective p values in tuple form
@@ -2026,6 +2163,35 @@ mat <- as.matrix((A5d_p.res$par[3]*(1-A5d_p.res$par[1])*spmatrix_temp+(1-A5d_p.r
 A5d_model <- ml_fit(p=A5d_p.res$par,formula=A5d_model[[1]],data=A5d,spmatrix=A5d_spmatrix,phylomatrix=A5d_phylomatrix)
 # Save model fit
 save(A5d_model, file = "output/A5d/A5d_model.RData") 
+
+## --- A6 --- ####
+
+# --- Model predictor combinations ---
+A6_model <- c(L1_pop ~ documentation)
+
+# --- OLS ---
+A6_OLS <- lm(data=A6, formula = L1_pop ~ documentation)
+summary(A6_OLS)
+
+# --- Best p values for GLS models ---
+A6_p.res <- sbplx(c(0.5, 0.5, 0.5),
+                  best_p,
+                  formula=L1_pop ~ documentation,
+                  data=A6,
+                  spmatrix=A6_spmatrix,phylomatrix=A6_phylomatrix,
+                  lower=c(0,0,0),upper=c(1,1,1),
+                  nl.info = TRUE)
+# Save p.res and covariance matrix
+save(A6_p.res, file = "output/A6/A6_p_res.RData")
+spmatrix_temp <- A6_spmatrix/max(A6_spmatrix)
+spmatrix_temp <- exp(-(spmatrix_temp/A6_p.res$par[2])^2)
+mat <- as.matrix((A6_p.res$par[3]*(1-A6_p.res$par[1])*spmatrix_temp+(1-A6_p.res$par[1])*(1-A6_p.res$par[3])*A6_phylomatrix+A6_p.res$par[1]*diag(dim(A6_phylomatrix)[1])))
+
+# --- Maximum likelihood fits for all models A1b ---
+A6_model <- ml_fit(p=A6_p.res$par,formula=L1_pop ~ documentation,data=A6,spmatrix=A6_spmatrix,phylomatrix=A6_phylomatrix)
+# Save model fit
+save(A6_model, file = "output/A6/A6_model.RData") 
+summary(A6_model)
 
 # --- (8) RESULTS PLOTS --- ####
 
