@@ -1472,7 +1472,7 @@ saveRDS(A2_fits, "output/A2/A2_fits.RDS")
 # --- BMA and PIP for all models ---
 logp <- sapply(A2_fits,function (i) -BIC(i)/2)
 pp <- exp(logp-max(logp)) 
-pp <- A2_pp/sum(pp) 
+pp <- pp/sum(pp) 
 beta <- lapply(1:length(A2_fits),function (j) {
   coef <- A2_fits[[j]]$coefficients[-1] #assuming intercept is the first element in coefficients
   names(coef) <- A2_models_var[[j]]
@@ -1634,7 +1634,7 @@ saveRDS(A3a_fits, "output/A3a/A3a_fits.RDS")
 # --- BMA and PIP for all models ---
 logp <- sapply(A3a_fits,function (i) -BIC(i)/2)
 pp <- exp(logp-max(logp)) 
-pp <- A2_pp/sum(pp) 
+pp <- pp/sum(pp) 
 beta <- lapply(1:length(A3a_fits),function (j) {
   coef <- A3a_fits[[j]]$coefficients[-1] #assuming intercept is the first element in coefficients
   names(coef) <- A3a_models_var[[j]]
@@ -2200,9 +2200,9 @@ summary(A6_model)
 # Show regression lines (with and without correction for autocorrelation)
 PISa_L1_pop_wr = ggplot(A1a, aes(x = L1_pop, y = Phoneme.Inventory.Size, color = factor(region, levels = region_order))) + 
   geom_point() + 
-  geom_abline(intercept = A1a_l1$coefficients[1], slope = A1a_l1$coefficients[2],
+  geom_abline(intercept = A1a_OLS$coefficients[1], slope = A1a_OLS$coefficients[2],
               color = "red", linewidth = 1) +
-  geom_abline(intercept = A1a_model$coefficients[1], slope = A1a_model$coefficients[2],
+  geom_abline(intercept = A1a_GLS_model$coefficients[1], slope = A1a_GLS_model$coefficients[2],
               color = "blue", linewidth = 1) +
   labs(x = "L1_pop", y = "PISa", color = "Region") + 
   scale_color_manual(values = region_colours) +
