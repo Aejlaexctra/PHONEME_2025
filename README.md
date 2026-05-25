@@ -48,7 +48,7 @@ There are 11 rounds of analysis (see paper for overview of predictor and respons
 
 -   A5a - PISa_c \~ L1_pop, N = 306
 
--   A5b - PISc_a \~ L1_pop, N = 306
+-   A5b - PISc_a \~ Bordering + Altitude + L1_pop + Island + Range, N = 306
 
 -   A5c - PISc_a \~ Bordering + L1_pop + Island + Mainland + Continent + Range, N = 306
 
