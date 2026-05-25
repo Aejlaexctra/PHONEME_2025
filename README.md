@@ -2,7 +2,7 @@ This is the code repository for the paper **Is phoneme inventory size influenced
 
 ## Data
 
-Datasets used by in the analysis can be downloaded from **XX (Zenodo Link)**
+Datasets used by in the analysis are included in data folder within repository
 
 ## Code
 
