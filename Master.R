@@ -54,6 +54,49 @@ colnames(phoible)[colnames(phoible) == "Sounds"] <- "Phoneme.Inventory.Size"
 glotto_duplicates <- duplicated(phoible$Glottocode) # Remove duplicate glottocode entries
 phoible <- phoible[!unlist(glotto_duplicates),]
 
+## --- Creating Output Folders --- ####
+
+# --- A1a --- #
+ifelse(!dir.exists(file.path("output/A1a")),
+       dir.create(file.path("output/A1a")),
+       "A1a Directory Exists")
+# --- A1b --- #
+ifelse(!dir.exists(file.path("output/A1b")),
+       dir.create(file.path("output/A1b")),
+       "A1b Directory Exists")
+# --- A2 --- #
+ifelse(!dir.exists(file.path("output/A2")),
+       dir.create(file.path("output/A2")),
+       "A2 Directory Exists")
+# --- A3a --- #
+ifelse(!dir.exists(file.path("output/A3a")),
+       dir.create(file.path("output/A3a")),
+       "A3a Directory Exists")
+# --- A3b --- #
+ifelse(!dir.exists(file.path("output/A3b")),
+       dir.create(file.path("output/A3b")),
+       "A3b Directory Exists")
+# --- A5a --- #
+ifelse(!dir.exists(file.path("output/A5a")),
+       dir.create(file.path("output/A5a")),
+       "A5a Directory Exists")
+# --- A5b --- #
+ifelse(!dir.exists(file.path("output/A5b")),
+       dir.create(file.path("output/A5b")),
+       "A5b Directory Exists")
+# --- A5c --- #
+ifelse(!dir.exists(file.path("output/A5c")),
+       dir.create(file.path("output/A5c")),
+       "A5c Directory Exists")
+# --- A5d --- #
+ifelse(!dir.exists(file.path("output/A5d")),
+       dir.create(file.path("output/A5d")),
+       "A5d Directory Exists")
+# --- A6 --- #
+ifelse(!dir.exists(file.path("output/A6")),
+       dir.create(file.path("output/A6")),
+       "A6 Directory Exists")
+
 # --- (2) FUNCTION DEFINITIONS --- ####
 
 ## --- GLS (2) Setup --- ####
