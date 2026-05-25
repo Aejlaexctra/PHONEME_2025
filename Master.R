@@ -45,8 +45,8 @@ colnames(nee24)[colnames(nee24) == "L1.Population"] <- "L1_pop"
 nee24$Island.Endemic <- as.numeric(nee24$Island.Endemic)
 
 ## --- Loading Phoible (4) --- ####
-var_phon_inv_spec_data <- read.csv("Data/cldf-datasets-inventory-study/PHOIBLE-data.csv")
-var_phon_inv_glot_data <- read.csv("Data/cldf-datasets-inventory-study/phoible/cldf/languages.csv")
+var_phon_inv_spec_data <- read.csv("data/phoible/PHOIBLE-data.csv")
+var_phon_inv_glot_data <- read.csv("data/phoible/languages.csv")
 phoible <- merge(
   var_phon_inv_spec_data[, c("Glottocode", "Sounds", "Latitude", "Longitude")],
   var_phon_inv_glot_data[, c("ISO639P3code", "Glottocode")], by.x = "Glottocode", by.y = "Glottocode", all.x = TRUE)
