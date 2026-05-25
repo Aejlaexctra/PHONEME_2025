@@ -57,10 +57,16 @@ phoible <- phoible[!unlist(glotto_duplicates),]
 # --- (2) FUNCTION DEFINITIONS --- ####
 
 ## --- GLS (2) Setup --- ####
-best_p <- function (p,formula,data,spmatrix,phylomatrix) {
+best_p <- function (p,formula,data,spmatrix,phylomatrix,opt="SP") {
   spmatrix <- spmatrix/max(spmatrix)
   spmatrix <- exp(-(spmatrix/p[2])^2)
-  mat <- as.matrix((p[3]*(1-p[1])*spmatrix+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1])))
+  if(opt=="SP"){ # Accounting for Spatial and Phylogenetic Autocorrelation
+    mat <- as.matrix((p[3]*(1-p[1])*spmatrix+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1]))) 
+  } else if(opt == "S"){ # Accounting for Spatial Autocorrelation
+    mat <- as.matrix((1-p[1])*spmatrix+p[1]*diag(dim(spmatrix)[1]))
+  } else { # Accounting for Phylogenetic Autocorrelation
+    mat <- as.matrix((1-p[1])*phylomatrix+p[1]*diag(dim(phylomatrix)[1]))
+  }
   res <- try(gls(model=formula,data=data,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML"),silent=T)
   if (inherits(res,"try-error")) {
     out <- -10000
@@ -71,10 +77,16 @@ best_p <- function (p,formula,data,spmatrix,phylomatrix) {
   -out
 }
 
-ml_fit <- function (p,formula,data,spmatrix,phylomatrix) {
+ml_fit <- function (p,formula,data,spmatrix,phylomatrix,opt="SP") {
   spmatrix <- spmatrix/max(spmatrix)
   spmatrix <- exp(-(spmatrix/p[2])^2)
-  mat <- as.matrix((p[3]*(1-p[1])*spmatrix+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1])))
+  if(opt=="SP"){ # Accounting for Spatial and Phylogenetic Autocorrelation
+    mat <- as.matrix((p[3]*(1-p[1])*spmatrix+(1-p[1])*(1-p[3])*phylomatrix+p[1]*diag(dim(phylomatrix)[1]))) 
+  } else if(opt == "S"){ # Accounting for Spatial Autocorrelation
+    mat <- as.matrix((1-p[1])*spmatrix+p[1]*diag(dim(spmatrix)[1]))
+  } else { # Accounting for Phylogenetic Autocorrelation
+    mat <- as.matrix((1-p[1])*phylomatrix+p[1]*diag(dim(phylomatrix)[1]))
+  }
   res <- try(gls(model=formula,data=data,correlation=corSymm(mat[lower.tri(mat)],fixed=T),method="ML"),silent=T)
   res
 }
@@ -1265,7 +1277,7 @@ print(summary(A1a_OLS))
 print(BIC(A1a_OLS))
 print(logLik(A1a_OLS))
 
-# --- Best p values for model A1a ---
+# --- Best p values for model A1a (S+P) ---
 A1a_GLS_p.res <- sbplx(c(0.5, 0.5, 0.5),
                    best_p,
                    formula=Phoneme.Inventory.Size ~ L1_pop,
@@ -1276,33 +1288,70 @@ A1a_GLS_p.res <- sbplx(c(0.5, 0.5, 0.5),
 # Save p.res
 save(A1a_GLS_p.res, file = "output/A1a/A1a_GLS_p_res.RData")
 
-# --- Maximum likelihood fits A1a GLS ---
+# --- Maximum likelihood fits A1a GLS (S+P) ---
 A1a_GLS_model <- ml_fit(p=A1a_GLS_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix)
 # Save model fit
 save(A1a_GLS_model, file = "output/A1a/A1a_GLS_model.RData") 
 
-# --- Best p values for null of model A1a GLS ---
-A1a_GLS_null_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                   best_p,
-                   formula=Phoneme.Inventory.Size ~ 1,
-                   data=A1a,
-                   spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
-                   lower=c(0,0,0),upper=c(1,1,1),
-                   nl.info = TRUE)
+# --- Best p values for model A1a (S) ---
+A1a_GLS_S_p.res <- sbplx(c(0.5, 0.5, 0.5),
+                       best_p,
+                       formula=Phoneme.Inventory.Size ~ L1_pop,
+                       data=A1a,
+                       spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
+                       opt = "S",
+                       lower=c(0,0,0),upper=c(1,1,1),
+                       nl.info = TRUE)
 # Save p.res
-save(A1a_GLS_null_p.res, file = "output/A1a/A1a_GLS_null_p_res.RData")
+save(A1a_GLS_S_p.res, file = "output/A1a/A1a_GLS_S_p_res.RData")
+
+# --- Maximum likelihood fits A1a GLS (S) ---
+A1a_GLS_S_model <- ml_fit(p=A1a_GLS_S_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,opt="S")
+# Save model fit
+save(A1a_GLS_S_model, file = "output/A1a/A1a_GLS_S_model.RData") 
+
+# --- Best p values for model A1a (P) ---
+A1a_GLS_P_p.res <- sbplx(c(0.5, 0.5, 0.5),
+                         best_p,
+                         formula=Phoneme.Inventory.Size ~ L1_pop,
+                         data=A1a,
+                         spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
+                         opt = "P",
+                         lower=c(0,0,0),upper=c(1,1,1),
+                         nl.info = TRUE)
+# Save p.res
+save(A1a_GLS_P_p.res, file = "output/A1a/A1a_GLS_P_p_res.RData")
+
+# --- Maximum likelihood fits A1a GLS (P) ---
+A1a_GLS_P_model <- ml_fit(p=A1a_GLS_P_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,opt="P")
+# Save model fit
+save(A1a_GLS_P_model, file = "output/A1a/A1a_GLS_P_model.RData")
+
+# --- Best p values for null of model A1a GLS ---
+# A1a_GLS_null_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                    best_p,
+#                    formula=Phoneme.Inventory.Size ~ 1,
+#                    data=A1a,
+#                    spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
+#                    lower=c(0,0,0),upper=c(1,1,1),
+#                    nl.info = TRUE)
+# # Save p.res
+# save(A1a_GLS_null_p.res, file = "output/A1a/A1a_GLS_null_p_res.RData")
 
 # --- Nagelkerke/Cragg-Uhler Pseudo-R^2 of OLS and GLS ---
-# (1) OLS
+# (1) Using OLS null against full OLS
 A1a_OLS_nll <- - logLik(A1a_OLS) %>% as.numeric # Negative log likelihood of full model
 A1a_OLS_null_nll <- -logLik(A1a_OLS_null) %>% as.numeric # Negative loglikelihood of null model
 A1a_OLS_R2 <- (1-exp(A1a_OLS_nll - A1a_OLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_OLS_null_nll)^(2/dim(A1a)[1]))
-# (2) GLS
-A1a_GLS_nll <- A1a_GLS_p.res$value # Negative log likelihood of full model
-A1a_GLS_null_nll <- A1a_GLS_null_p.res$value # Negative loglikelihood of null model
-A1a_GLS_R2 <- (1-exp(A1a_GLS_nll-A1a_GLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_GLS_null_nll)^(2/dim(A1a)[1]))
-# (3) Using OLS null against full GLS
-A1a_GLS_v2_R2 <-  (1-exp(A1a_GLS_nll-A1a_OLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_OLS_null_nll)^(2/dim(A1a)[1]))
+# (2) Using OLS null against GLS (S+P)
+A1a_GLS_SP_nll <- A1a_GLS_p.res$value # Negative log likelihood of full model
+A1a_GLS_SP_R2 <-  (1-exp(A1a_GLS_SP_nll-A1a_OLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_OLS_null_nll)^(2/dim(A1a)[1]))
+# (3) Using OLS null against GLS (S)
+A1a_GLS_S_nll <- A1a_GLS_S_p.res$value # Negative log likelihood of full model
+A1a_GLS_S_R2 <-  (1-exp(A1a_GLS_S_nll-A1a_OLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_OLS_null_nll)^(2/dim(A1a)[1]))
+# (4) Using OLS null against GLS (P)
+A1a_GLS_P_nll <- A1a_GLS_P_p.res$value # Negative log likelihood of full model
+A1a_GLS_P_R2 <-  (1-exp(A1a_GLS_P_nll-A1a_OLS_null_nll)^(2/dim(A1a)[1]))/(1-exp(-A1a_OLS_null_nll)^(2/dim(A1a)[1]))
 
 ## --- A1b --- ####
 
