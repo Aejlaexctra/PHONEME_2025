@@ -1285,6 +1285,24 @@ region_box <- ggplot(A5a_region_sample_tallies_long, aes(x = Group, y = Value)) 
 ggsave("output/A5a/region_sampling.png", plot = region_box, width = 15, height = 15, dpi = 300, scale = 0.5)
 print(region_box)
 
+## --- A5b --- ####
+
+# --- Plot correlation between PISa_c and PISc_a ---
+df <- data.frame(A5a$ISO, A5a$region, A5a$Phoneme.Inventory.Size, A5b$Phoneme.Inventory.Size)
+colnames(df) <- c("ISO","region", "PISA","PISC")
+
+PISA_PISC_l1 <- lm(data=df, PISC ~ PISA)
+summary(PISA_PISC_l1)
+
+ggplot(data=df, aes(x=PISA,y=PISC, color = factor(region, levels = region_order))) + 
+  geom_point() + 
+  geom_abline(intercept = 0, slope = 1,
+              color = "red", linewidth = 1) +
+  labs(x = "PISA", y = "PISC", color = "Region") + 
+  scale_color_manual(values = region_colours) +
+  theme_classic()
+# Save graph
+
 ## --- A6 --- ####
 
 # Get raw A4 adjusted data and matrices
