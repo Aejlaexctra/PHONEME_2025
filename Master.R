@@ -1732,7 +1732,7 @@ beta <- lapply(1:length(A3a_fits),function (j) {
   names(coef) <- A3a_models_var[[j]]
   coef
 })
-A3a_bma <- A3a_pip <- rep(NA,length(A2_predictors))
+A3a_bma <- A3a_pip <- rep(NA,length(A3a_predictors))
 names(A3a_bma) <- names(A3a_pip) <- A3a_predictors
 for (var in A3a_predictors) {
   idx <- sapply(1:length(A3a_fits),function (i) is.element(var,A3a_models_var[[i]]))
