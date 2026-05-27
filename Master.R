@@ -8,6 +8,7 @@ library(nloptr)
 library(nlme)
 library(parallel)
 library(ggplot2)
+library(patchwork)
 library(dplyr)
 library(tidyr)
 library(maps)
@@ -574,17 +575,17 @@ A3a$Range.Size..km2. <- log(A3a$Range.Size..km2.)
 A3a$L1_pop <- log(A3a$L1_pop + 0.5)
 A3a$bordering_language_richness <- log(A3a$bordering_language_richness + 0.5)
 # Do not transform zero entries for distance variables
-A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0] <- log(
-  A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0])
-A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0] <- log(
-  A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0])
+# A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0] <- log(
+#   A3a$Distance.to.Mainland[A3a$Distance.to.Mainland != 0])
+# A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0] <- log(
+#   A3a$Distance.to.Continent[A3a$Distance.to.Continent != 0])
 
 # --- Standardise predictors ---
 A3a$Range.Size..km2. <- scale(A3a$Range.Size..km2.)
 A3a$L1_pop <- scale(A3a$L1_pop)
 A3a$bordering_language_richness <- scale(A3a$bordering_language_richness)
-A3a$Distance.to.Mainland <- scale(A3a$Distance.to.Mainland)
-A3a$Distance.to.Continent <- scale(A3a$Distance.to.Continent)
+# A3a$Distance.to.Mainland <- scale(A3a$Distance.to.Mainland)
+# A3a$Distance.to.Continent <- scale(A3a$Distance.to.Continent)
 
 ## --- A3b ---  ####
 
@@ -725,7 +726,7 @@ PIS_world_map <- ggplot() +
   scale_color_viridis_c(option="plasma") +
   coord_fixed(1.3) +
   theme_minimal(base_size = 20) +
-  labs(x = NULL, y = NULL, color = "Log PISa", size = "Log L1_pop")
+  labs(x = NULL, y = NULL, color = expression("Log " * PIS[A]), size = "Log L1_pop")
 PIS_world_map
 ggsave("output/A1a/PIS_world_map.png", plot = PIS_world_map, width = 15, height = 10, dpi = 300)
 
@@ -762,7 +763,7 @@ for(i in 1:n_rep){
 A1a_region_sample_tallies_long <- pivot_longer(region_sample_tallies, everything(), names_to = c("Group"), values_to = 'Value')
 # Set 'Group' as a factor with levels in the desired order, this is to ensure that ggplot doesn't alphabetically sort the regions.
 A1a_region_sample_tallies_long$Group <- factor(A1a_region_sample_tallies_long$Group, levels = region_order)
-region_box <- ggplot(A1a_region_sample_tallies_long, aes(x = Group, y = Value)) +
+A1a_region_box <- ggplot(A1a_region_sample_tallies_long, aes(x = Group, y = Value)) +
   geom_boxplot(varwidth = TRUE) +
   geom_point(data = A1a_region_tally, 
              aes(x = region_order, y = Freq), 
@@ -783,8 +784,8 @@ region_box <- ggplot(A1a_region_sample_tallies_long, aes(x = Group, y = Value)) 
         axis.text.y = element_text(size = 10),
         axis.title.y.left = element_text(size = 10))
 # Save graph
-ggsave("output/A1a/region_sampling.png", plot = region_box, width = 15, height = 15, dpi = 300, scale = 0.5)
-print(region_box)
+ggsave("output/A1a/region_sampling.png", plot = A1a_region_box, width = 15, height = 15, dpi = 300, scale = 0.5)
+print(A1a_region_box)
 
 # Show diffs between number of observed languages sampled and the median, Q1, Q4, min and max of sampled regions from NEE22 (Fig 4c)
 A1a_region_sample_diff <- data.frame(region_order, 
@@ -832,7 +833,7 @@ ggsave("output/A1a/region_sampling_diff.png",A1a_region_sample_plot)
 summary(lm(A1a_region_sample_diff_long$median_PISa ~ A1a_region_sample_diff_long$diff_value))
 
 # --- Phoneme.Inventory.Size across regions A1a (BUT WILL BE USED IN SECTION 4 of PAPER) ---
-box_phoneme_regions <- ggplot(raw_A1a, aes(
+A1a_box_phoneme_regions <- ggplot(raw_A1a, aes(
   x = factor(region, levels = region_order),
   y = Phoneme.Inventory.Size
 )) +
@@ -840,12 +841,12 @@ box_phoneme_regions <- ggplot(raw_A1a, aes(
   geom_hline(yintercept = median(raw_A1a$Phoneme.Inventory.Size), color = "red") +
   labs(
     x = "Region",
-    y = "PISa"
+    y = expression(PIS[A])
   ) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-print(box_phoneme_regions)
-ggsave("output/A1a/phoneme_region_box.png", plot = box_phoneme_regions, width = 15, height = 15, dpi = 300, scale = 0.5)
+print(A1a_box_phoneme_regions)
+ggsave("output/A1a/phoneme_region_box.png", plot = A1a_box_phoneme_regions, width = 15, height = 15, dpi = 300, scale = 0.5)
 
 ## --- A1b --- ####
 
@@ -918,7 +919,7 @@ for(i in 1:n_rep){
 A1b_region_sample_tallies_long <- pivot_longer(region_sample_tallies, everything(), names_to = c("Group"), values_to = 'Value')
 # Set 'Group' as a factor with levels in the desired order, this is to ensure that ggplot doesn't alphabetically sort the regions.
 A1b_region_sample_tallies_long$Group <- factor(A1b_region_sample_tallies_long$Group, levels = region_order)
-region_box <- ggplot(A1b_region_sample_tallies_long, aes(x = Group, y = Value)) +
+A1b_region_box <- ggplot(A1b_region_sample_tallies_long, aes(x = Group, y = Value)) +
   geom_boxplot(varwidth = TRUE) +
   geom_point(data = A1b_region_tally, 
              aes(x = region_order, y = Freq), 
@@ -939,11 +940,11 @@ region_box <- ggplot(A1b_region_sample_tallies_long, aes(x = Group, y = Value)) 
         axis.text.y = element_text(size = 10),
         axis.title.y.left = element_text(size = 10))
 # Save graph
-ggsave("output/A1b/region_sampling.png", plot = region_box, width = 15, height = 15, dpi = 300, scale = 0.5)
-print(region_box)
+ggsave("output/A1b/region_sampling.png", plot = A1_bregion_box, width = 15, height = 15, dpi = 300, scale = 0.5)
+print(A1b_region_box)
 
 # --- Phoneme.Inventory.Size across regions A1b (BUT WILL BE USED IN SECTION 4 of PAPER) ---
-box_phoneme_regions <- ggplot(raw_A1b, aes(
+A1b_box_phoneme_regions <- ggplot(raw_A1b, aes(
   x = factor(region, levels = region_order),
   y = Phoneme.Inventory.Size
 )) +
@@ -951,12 +952,12 @@ box_phoneme_regions <- ggplot(raw_A1b, aes(
   geom_hline(yintercept = median(raw_A1b$Phoneme.Inventory.Size), color = "red") +
   labs(
     x = "Region",
-    y = "PISc"
+    y = expression(PIS[C])
   ) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-print(box_phoneme_regions)
-ggsave("output/A1b/phoneme_region_box.png", plot = box_phoneme_regions, width = 15, height = 15, dpi = 300, scale = 0.5)
+print(A1b_box_phoneme_regions)
+ggsave("output/A1b/phoneme_region_box.png", plot = A1b_box_phoneme_regions, width = 15, height = 15, dpi = 300, scale = 0.5)
 
 # Show diff between number of observed languages sampled and the median, Q1, Q4, min and max of sampled regions from NEE22 (Fig 4c)
 A1b_region_sample_diff <- data.frame(region_order, 
@@ -1002,6 +1003,18 @@ print(A1b_region_sample_plot)
 ggsave("output/A1b/region_sampling_diff.png",A1b_region_sample_plot)
 # Take quick OLS
 summary(lm(A1b_region_sample_diff_long$median_PISc ~ A1b_region_sample_diff_long$diff_value))
+
+# --- Combine plots from A1a and A1b ---
+
+p1 <- A1a_box_phoneme_regions + ggtitle(expression("(a) Phoneme inventory size (" * PIS[A] * ")")) + 
+p2 <- A1b_box_phoneme_regions + ggtitle(expression("(b) Phoneme inventory size (" * PIS[C] * ")"))
+p3 <- A1a_region_box + ggtitle(expression("(c) Geographic sampling bias (" * PIS[A] * ")"))
+p4 <- A1b_region_box + ggtitle(expression("(d) Geographic sampling bias (" * PIS[C] * ")"))
+
+combined <- (p1 | p2) / plot_spacer() / (p3 |p4) + 
+  plot_layout(widths = c(1,1), heights = c(1,0.1,1))
+combined
+ggsave(filename="output/A1b/combined.png", combined, width = 12, height = 12)
 
 ## --- A2 --- ####
 
@@ -1294,14 +1307,16 @@ colnames(df) <- c("ISO","region", "PISA","PISC")
 PISA_PISC_l1 <- lm(data=df, PISC ~ PISA)
 summary(PISA_PISC_l1)
 
-ggplot(data=df, aes(x=PISA,y=PISC, color = factor(region, levels = region_order))) + 
+PISAvPISC <- ggplot(data=df, aes(x=PISA,y=PISC, color = factor(region, levels = region_order))) + 
   geom_point() + 
   geom_abline(intercept = 0, slope = 1,
               color = "red", linewidth = 1) +
-  labs(x = "PISA", y = "PISC", color = "Region") + 
+  labs(x = expression(PIS[A]), y = expression(PIS[C]), color = "Region") + 
   scale_color_manual(values = region_colours) +
   theme_classic()
+PISAvPISC
 # Save graph
+ggsave("output/A5b/PISAvPISC.png", plot = PISAvPISC, width = 15, height = 15, dpi = 300, scale = 0.5)
 
 ## --- A6 --- ####
 
@@ -1732,12 +1747,36 @@ spmatrix_temp <- exp(-(spmatrix_temp/A3a_p.res$par[2])^2)
 A3a_mat <- as.matrix((A3a_p.res$par[3]*(1-A3a_p.res$par[1])*spmatrix_temp+(1-A3a_p.res$par[1])*(1-A3a_p.res$par[3])*A3a_phylomatrix+A3a_p.res$par[1]*diag(dim(A3a_phylomatrix)[1])))
 save(A3a_mat, file = "output/A3a/A3a_mat.RData")
 
+# --- Transform Mainland Continent predictors (depending on whether Island predictor present) ---
+A3a_v1 <- A3a # Version for models with Island predictor
+A3a_v2 <- A3a # Version for models with no Island Predictor
+
+# Log transform
+A3a_v1$Distance.to.Mainland[A3a_v1$Distance.to.Mainland != 0] <- log(
+  A3a_v1$Distance.to.Mainland[A3a_v1$Distance.to.Mainland != 0])
+A3a_v1$Distance.to.Continent[A3a_v1$Distance.to.Continent != 0] <- log(
+  A3a_v1$Distance.to.Continent[A3a_v1$Distance.to.Continent != 0])
+A3a_v2$Distance.to.Continent <- log(A3a_v2$Distance.to.Continent + 0.5)
+A3a_v2$Distance.to.Mainland <- log(A3a_v2$Distance.to.Mainland + 0.5)
+# Standardise
+A3a_v1$Distance.to.Mainland <- scale(A3a_v1$Distance.to.Mainland)
+A3a_v1$Distance.to.Continent <- scale(A3a_v1$Distance.to.Continent)
+A3a_v2$Distance.to.Mainland <- scale(A3a_v2$Distance.to.Mainland)
+A3a_v2$Distance.to.Continent <- scale(A3a_v2$Distance.to.Continent)
+
 # --- Maximum likelihood fits for all models ---
 A3a_fits <- mclapply(
-  X = A3a_models,
-  FUN = function(f) ml_fit(p=A3a_p.res$par,formula=f,data=A3a,spmatrix=A3a_spmatrix,phylomatrix=A3a_phylomatrix),
+  X = seq_along(A3a_models),
+  FUN = function(i) {
+    if("Island.Endemic" %in% A3a_models_var[i]){
+      return(ml_fit(p=A3a_p.res$par,formula=A3a_models[[i]],data=A3a_v1,spmatrix=A3a_spmatrix,phylomatrix=A3a_phylomatrix))
+    } else {
+      return(ml_fit(p=A3a_p.res$par,formula=A3a_models[[i]],data=A3a_v2,spmatrix=A3a_spmatrix,phylomatrix=A3a_phylomatrix))
+    }
+  },
   mc.cores = 8
 )
+
 # Save models
 saveRDS(A3a_fits, "output/A3a/A3a_fits.RDS") 
 
@@ -2314,9 +2353,9 @@ PISa_L1_pop_wr = ggplot(A1a, aes(x = L1_pop, y = Phoneme.Inventory.Size, color =
               color = "red", linewidth = 1) +
   geom_abline(intercept = A1a_GLS_model$coefficients[1], slope = A1a_GLS_model$coefficients[2],
               color = "blue", linewidth = 1) +
-  labs(x = "L1_pop", y = "PISa", color = "Region") + 
+  labs(x = "L1_pop", y = expression(PIS[A]), color = "Region") + 
   scale_color_manual(values = region_colours) +
-  theme_minimal()
+  theme_classic()
 # Save graph
 ggsave("output/A1a/PISa_L1_pop_wr.png", plot = PISa_L1_pop_wr, width = 15, height = 10, dpi = 100,scale = 0.5)
 # Show graph
@@ -2332,9 +2371,9 @@ PISc_L1_pop_wr = ggplot(A3a, aes(x = L1_pop, y = Phoneme.Inventory.Size, color =
               color = "red", linewidth = 1) +
   geom_abline(intercept = A3a_fits[[6]]$coefficients[1], slope = A3a_fits[[6]]$coefficients[2],
               color = "blue", linewidth = 1) +
-  labs(x = "L1_pop", y = "PISc", color = "Region") + 
+  labs(x = "L1_pop", y = expression(PIS[C]), color = "Region") + 
   scale_color_manual(values = region_colours) +
-  theme_minimal()
+  theme_classic()
 # Save graph
 ggsave("output/A3a/PISc_L1_pop_wr.png", plot = PISc_L1_pop_wr, width = 15, height = 10, dpi = 100,scale = 0.5)
 # Show graph
@@ -2348,14 +2387,24 @@ PISc_Area_wr = ggplot(A3a, aes(x = Range.Size..km2., y = Phoneme.Inventory.Size,
               color = "red", linewidth = 1) +
   geom_abline(intercept = A3a_fits[[3]]$coefficients[1], slope = A3a_fits[[3]]$coefficients[2],
               color = "blue", linewidth = 1) +
-  labs(x = "Area", y = "PISc", color = "Region") + 
+  labs(x = "Area", y = expression(PIS[C]), color = "Region") + 
   scale_color_manual(values = region_colours) +
-  theme_minimal()
+  theme_classic()
 # Save graph
 ggsave("output/A3a/PISc_Area_wr.png", plot = PISc_Area_wr, width = 15, height = 10, dpi = 100,scale = 0.5)
 # Show graph
 print(PISc_Area_wr)
 
+# --- Combine plots ---
+legend <- cowplot::get_legend(PISa_L1_pop_wr + theme(legend.position = "right"))
+PISa_L1_pop_wr <- PISa_L1_pop_wr + theme(legend.position = "none") + ggtitle(expression("(a) " * PIS[A] * " and population size"))
+PISc_L1_pop_wr <- PISc_L1_pop_wr + theme(legend.position = "none") + ggtitle(expression("(b) " * PIS[C] * " and population size"))
+PISc_Area_wr <- PISc_Area_wr + theme(legend.position = "none") + ggtitle(expression("(c) " * PIS[C] * " and area"))
+
+combined <- (PISa_L1_pop_wr | PISc_L1_pop_wr) / plot_spacer() / (PISc_Area_wr | wrap_elements(legend)) + 
+  plot_layout(widths = c(1,1), heights = c(1,0.1,1))
+combined
+ggsave(filename="output/A3a/combined.png", combined, width = 10, height = 10)
 
 # --- (9) REFERENCES --- ####
 #
