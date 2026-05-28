@@ -2,11 +2,11 @@ This is the code repository for the paper **Is phoneme inventory size influenced
 
 ## Data
 
-Datasets used by in the analysis are included in data folder within repository
+Datasets used by in the analysis are included in `data` folder within the repository. Phylogenetic and spatial distance matrices, found in `data/distance_matrices` are subsets of matrices from (3). The PHOIBLE phoneme inventory from (1) is found in `data/phoible`. Data for the second phoneme inventory `data/NEE22.csv` is taken from (2), and data for the majority of the predictors used in this study `data/NEE24.csv` are from (4).
 
 ## Code
 
-All code and analysis is found and can be run within the `Master.R` file.
+All code and analysis is found and can be run within the `Master.R` file. Due to the time it takes to run the method, weightings of phylogenetic and spatial distance matrices have already been calculated (included in the folder `data`), but can be recalculated by uncommenting the relevant sections (found with the use of the function `best_p` ).
 
 ### Script Layout
 
@@ -34,17 +34,25 @@ There are nine sections within the file:
 
 There are 11 rounds of analysis (see paper for overview of predictor and response variables):
 
+#### Section 1
+
 -   A1a - PISa \~ L1_pop, N = 766 Languages
 
 -   A1b - PISc \~ L1_pop, N = 1716
 
+#### Section 2
+
 -   A2 - PISc \~ Bordering + Altitude + L1_pop + Island + Range, N = 1710
+
+#### Section 3
+
+-   A4 - PISc \~ Documentation, N = 1716
+
+#### Supplementary / Not Included
 
 -   A3a - PISc \~ Bordering + L1_pop + Island + Mainland + Continent + Range, N = 1716
 
 -   A3b - PISc_i \~ Bordering + L1_pop + Island + Mainland + Continent + Range, N = 153
-
--   A4 - PISc \~ Documentation, N = 1716
 
 -   A5a - PISa_c \~ L1_pop, N = 306
 
@@ -60,6 +68,10 @@ Where PISa are phoneme inventories from (1), PISc phoneme inventories from (2), 
 
 ### References
 
-(1) Cormac Anderson, Tiago Tresoldi, Simon J Greenhill, Robert Forkel, Russell Gray, Johann-Mattis List, Variation in phoneme inventories: quantifying the problem and improving comparability, Journal of Language Evolution, Volume 8, Issue 2, July 2023, Pages 149–168, <https://doi.org/10.1093/jole/lzad011>
+(1) Anderson, C., Tresoldi, T., Greenhill, S. J., Forkel, R., Gray, R., & List, J.-M. (2023). Variation in phoneme inventories: Quantifying the problem and improving comparability. Journal of Language Evolution, 8(2), 149–168. https://doi.org/10.1093/jole/lzad011
 
-(2) Bromham, L., Yaxley, K.J. & Cardillo, M. Islands are engines of language diversity. Nat Ecol Evol 8, 1991–2002 (2024). <https://doi.org/10.1038/s41559-024-02488-4>
+(2) Bromham, L., Yaxley, K. J., & Cardillo, M. (2024). Islands are engines of language diversity. Nature Ecology & Evolution, 8(10), 1991–2002. https://doi.org/10.1038/s41559-024-02488-4
+
+(3) Hua, X., Greenhill, S. J., Cardillo, M., Schneemann, H., & Bromham, L. (2019). The ecological drivers of variation in global language diversity. Nature Communications, 10(1), 2047. https://doi.org/10.1038/s41467-019-09842-2
+
+(4) Bromham, L., Dinnage, R., Skirgård, H., Ritchie, A., Cardillo, M., Meakins, F., Greenhill, S., & Hua, X. (2022). Global predictors of language endangerment and the future of linguistic diversity. Nature Ecology & Evolution, 6(2), 163–173. https://doi.org/10.1038/s41559-021-01604-y

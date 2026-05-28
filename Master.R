@@ -13,22 +13,31 @@ library(dplyr)
 library(tidyr)
 library(maps)
 
-## --- Loading Phylogenetic, Spatial Distance and Contact Matrices --- ####
+## --- Loading Complete Phylogenetic and Spatial Distance Matrices --- ####
 # Phylogenetic distance matrix
-phylomatrix <- read.csv("data/distance_matrices/phylogenetic_covariance_matrix.csv",
-                        check.names = FALSE)
-rownames(phylomatrix) <- phylomatrix[,1]
-phylomatrix <- phylomatrix[,-1]
-phylomatrix <- as.matrix(phylomatrix)
-# Spatial distance matrix
-spmatrix <- read.csv("data/distance_matrices/spatial_distance_matrix.csv",
-                     check.names = FALSE)
-rownames(spmatrix) <- spmatrix[,1]
-spmatrix <- spmatrix[,-1]
-spmatrix <- as.matrix(spmatrix)
+# phylomatrix <- read.csv("data/distance_matrices/phylogenetic_covariance_matrix.csv",
+#                         check.names = FALSE)
+# rownames(phylomatrix) <- phylomatrix[,1]
+# phylomatrix <- phylomatrix[,-1]
+# phylomatrix <- as.matrix(phylomatrix)
+# # Spatial distance matrix
+# spmatrix <- read.csv("data/distance_matrices/spatial_distance_matrix.csv",
+#                      check.names = FALSE)
+# rownames(spmatrix) <- spmatrix[,1]
+# spmatrix <- spmatrix[,-1]
+# spmatrix <- as.matrix(spmatrix)
+
+## --- Loading Truncated Phylogenetic and Spatial Distance Matrices (for GitHub) --- ####
+# kept_ISO <- union(A3a$ISO,A1a$ISO)
+# phylomatrix <- phylomatrix[kept_ISO,kept_ISO]
+# spmatrix <- spmatrix[kept_ISO,kept_ISO]
+# save(phylomatrix,file = "data/distance_matrices/phylomatrix.RData")
+# save(spmatrix,file = "data/distance_matrices/spmatrix.RData")
+load("data/distance_matrices/phylomatrix.RData")
+load("data/distance_matrices/spmatrix.RData")
 
 ## --- Loading NEE22 (3) --- ####
-nee22 <- read.csv("data/Global predictors of language endangerment and the future of linguistic diversity Data 2.csv",
+nee22 <- read.csv("data/NEE22.csv",
                   stringsAsFactors = FALSE)
 colnames(nee22)[colnames(nee22) == "island"] <- "Island.Endemic" # Rename Island predictor to Island.Endemic
 nee22$documentation[nee22$documentation == "little or none"] <- "0" # Convert Documentation predictor from string to integer
@@ -38,7 +47,7 @@ nee22$documentation <- as.integer(nee22$documentation)
 nee22$region[nee22$region == "Arab"] <- "North Africa and Arabia" # Change Region "Arab" to "North Africa and Arabia"
 
 ## --- Loading NEE24 (1) --- ####
-nee24 <- read.csv("data/Islands are engines of language diversity data.csv",
+nee24 <- read.csv("data/NEE24.csv",
                   stringsAsFactors = FALSE)
 # Rename L1.Population predictor to L1_pop
 colnames(nee24)[colnames(nee24) == "L1.Population"] <- "L1_pop"
@@ -56,6 +65,11 @@ glotto_duplicates <- duplicated(phoible$Glottocode) # Remove duplicate glottocod
 phoible <- phoible[!unlist(glotto_duplicates),]
 
 ## --- Creating Output Folders --- ####
+
+# --- output --- #
+ifelse(!dir.exists(file.path("output/")),
+       dir.create(file.path("output/")),
+       "output Directory Exists")
 
 # --- A1a --- #
 ifelse(!dir.exists(file.path("output/A1a")),
@@ -77,6 +91,10 @@ ifelse(!dir.exists(file.path("output/A3a")),
 ifelse(!dir.exists(file.path("output/A3b")),
        dir.create(file.path("output/A3b")),
        "A3b Directory Exists")
+# --- A4 --- #
+ifelse(!dir.exists(file.path("output/A4")),
+       dir.create(file.path("output/A4")),
+       "A4 Directory Exists")
 # --- A5a --- #
 ifelse(!dir.exists(file.path("output/A5a")),
        dir.create(file.path("output/A5a")),
@@ -674,7 +692,7 @@ region_colours <- c("Oceania" = "#a6cee3", "Australia and New Zealand" = "#1f78b
 
 # Retrieve nee22 (if not already loaded)
 if(!exists("nee22")){
-  nee22 <- read.csv("data/Global predictors of language endangerment and the future of linguistic diversity Data 2.csv",
+  nee22 <- read.csv("data/NEE22.csv",
                     stringsAsFactors = FALSE)
   # Change Region "Arab" to "North Africa and Arabia"
   nee22$region[nee22$region == "Arab"] <- "North Africa and Arabia"
@@ -894,7 +912,7 @@ print(phoneme_L1_scatter)
 # --- Testing for region sampling bias A1b (BUT WILL BE USED IN SECTION 4 of PAPER) ---
 # Retrieve nee22 (if not already loaded)
 if(!exists("nee22")){
-  nee22 <- read.csv("data/Global predictors of language endangerment and the future of linguistic diversity Data 2.csv",
+  nee22 <- read.csv("data/NEE22.csv",
                     stringsAsFactors = FALSE) 
 }
 # number of repetitions
@@ -940,7 +958,7 @@ A1b_region_box <- ggplot(A1b_region_sample_tallies_long, aes(x = Group, y = Valu
         axis.text.y = element_text(size = 10),
         axis.title.y.left = element_text(size = 10))
 # Save graph
-ggsave("output/A1b/region_sampling.png", plot = A1_bregion_box, width = 15, height = 15, dpi = 300, scale = 0.5)
+ggsave("output/A1b/region_sampling.png", plot = A1b_region_box, width = 15, height = 15, dpi = 300, scale = 0.5)
 print(A1b_region_box)
 
 # --- Phoneme.Inventory.Size across regions A1b (BUT WILL BE USED IN SECTION 4 of PAPER) ---
@@ -1006,7 +1024,7 @@ summary(lm(A1b_region_sample_diff_long$median_PISc ~ A1b_region_sample_diff_long
 
 # --- Combine plots from A1a and A1b ---
 
-p1 <- A1a_box_phoneme_regions + ggtitle(expression("(a) Phoneme inventory size (" * PIS[A] * ")")) + 
+p1 <- A1a_box_phoneme_regions + ggtitle(expression("(a) Phoneme inventory size (" * PIS[A] * ")"))
 p2 <- A1b_box_phoneme_regions + ggtitle(expression("(b) Phoneme inventory size (" * PIS[C] * ")"))
 p3 <- A1a_region_box + ggtitle(expression("(c) Geographic sampling bias (" * PIS[A] * ")"))
 p4 <- A1b_region_box + ggtitle(expression("(d) Geographic sampling bias (" * PIS[C] * ")"))
@@ -1354,15 +1372,16 @@ print(BIC(A1a_OLS))
 print(logLik(A1a_OLS))
 
 # --- Best p values for model A1a (S+P) ---
-A1a_GLS_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                   best_p,
-                   formula=Phoneme.Inventory.Size ~ L1_pop,
-                   data=A1a,
-                   spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
-                   lower=c(0,0,0),upper=c(1,1,1),
-                   nl.info = TRUE)
-# Save p.res
-save(A1a_GLS_p.res, file = "output/A1a/A1a_GLS_p_res.RData")
+load("data/A1a/A1a_GLS_p_res.RData")
+# A1a_GLS_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                    best_p,
+#                    formula=Phoneme.Inventory.Size ~ L1_pop,
+#                    data=A1a,
+#                    spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
+#                    lower=c(0,0,0),upper=c(1,1,1),
+#                    nl.info = TRUE)
+# # Save p.res
+# save(A1a_GLS_p.res, file = "output/A1a/A1a_GLS_p_res.RData")
 
 # --- Maximum likelihood fits A1a GLS (S+P) ---
 A1a_GLS_model <- ml_fit(p=A1a_GLS_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix)
@@ -1370,16 +1389,17 @@ A1a_GLS_model <- ml_fit(p=A1a_GLS_p.res$par,formula=Phoneme.Inventory.Size ~ L1_
 save(A1a_GLS_model, file = "output/A1a/A1a_GLS_model.RData") 
 
 # --- Best p values for model A1a (S) ---
-A1a_GLS_S_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                       best_p,
-                       formula=Phoneme.Inventory.Size ~ L1_pop,
-                       data=A1a,
-                       spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
-                       opt = "S",
-                       lower=c(0,0,0),upper=c(1,1,1),
-                       nl.info = TRUE)
-# Save p.res
-save(A1a_GLS_S_p.res, file = "output/A1a/A1a_GLS_S_p_res.RData")
+load("data/A1a/A1a_GLS_S_p_res.RData")
+# A1a_GLS_S_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                        best_p,
+#                        formula=Phoneme.Inventory.Size ~ L1_pop,
+#                        data=A1a,
+#                        spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
+#                        opt = "S",
+#                        lower=c(0,0,0),upper=c(1,1,1),
+#                        nl.info = TRUE)
+# # Save p.res
+# save(A1a_GLS_S_p.res, file = "output/A1a/A1a_GLS_S_p_res.RData")
 
 # --- Maximum likelihood fits A1a GLS (S) ---
 A1a_GLS_S_model <- ml_fit(p=A1a_GLS_S_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,opt="S")
@@ -1387,32 +1407,22 @@ A1a_GLS_S_model <- ml_fit(p=A1a_GLS_S_p.res$par,formula=Phoneme.Inventory.Size ~
 save(A1a_GLS_S_model, file = "output/A1a/A1a_GLS_S_model.RData") 
 
 # --- Best p values for model A1a (P) ---
-A1a_GLS_P_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                         best_p,
-                         formula=Phoneme.Inventory.Size ~ L1_pop,
-                         data=A1a,
-                         spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
-                         opt = "P",
-                         lower=c(0,0,0),upper=c(1,1,1),
-                         nl.info = TRUE)
-# Save p.res
-save(A1a_GLS_P_p.res, file = "output/A1a/A1a_GLS_P_p_res.RData")
+load("data/A1a/A1a_GLS_P_p_res.RData")
+# A1a_GLS_P_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                          best_p,
+#                          formula=Phoneme.Inventory.Size ~ L1_pop,
+#                          data=A1a,
+#                          spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
+#                          opt = "P",
+#                          lower=c(0,0,0),upper=c(1,1,1),
+#                          nl.info = TRUE)
+# # Save p.res
+# save(A1a_GLS_P_p.res, file = "output/A1a/A1a_GLS_P_p_res.RData")
 
 # --- Maximum likelihood fits A1a GLS (P) ---
 A1a_GLS_P_model <- ml_fit(p=A1a_GLS_P_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1a,spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,opt="P")
 # Save model fit
 save(A1a_GLS_P_model, file = "output/A1a/A1a_GLS_P_model.RData")
-
-# --- Best p values for null of model A1a GLS ---
-# A1a_GLS_null_p.res <- sbplx(c(0.5, 0.5, 0.5),
-#                    best_p,
-#                    formula=Phoneme.Inventory.Size ~ 1,
-#                    data=A1a,
-#                    spmatrix=A1a_spmatrix,phylomatrix=A1a_phylomatrix,
-#                    lower=c(0,0,0),upper=c(1,1,1),
-#                    nl.info = TRUE)
-# # Save p.res
-# save(A1a_GLS_null_p.res, file = "output/A1a/A1a_GLS_null_p_res.RData")
 
 # --- Nagelkerke/Cragg-Uhler Pseudo-R^2 of OLS and GLS ---
 # (1) Using OLS null against full OLS
@@ -1438,15 +1448,16 @@ print(BIC(A1b_l1))
 print(logLik(A1b_l1))
 
 # --- Best p values for all models A1b ---
-A1b_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                   best_p,
-                   formula=Phoneme.Inventory.Size ~ L1_pop,
-                   data=A1b,
-                   spmatrix=A1b_spmatrix,phylomatrix=A1b_phylomatrix,
-                   lower=c(0,0,0),upper=c(1,1,1),
-                   nl.info = TRUE)
-# Save p.res
-save(A1b_p.res, file = "output/A1b/A1b_p_res.RData")
+load("data/A1b/A1b_p_res.RData")
+# A1b_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                    best_p,
+#                    formula=Phoneme.Inventory.Size ~ L1_pop,
+#                    data=A1b,
+#                    spmatrix=A1b_spmatrix,phylomatrix=A1b_phylomatrix,
+#                    lower=c(0,0,0),upper=c(1,1,1),
+#                    nl.info = TRUE)
+# # Save p.res
+# save(A1b_p.res, file = "output/A1b/A1b_p_res.RData")
 
 # --- Maximum likelihood fits for all models A1b ---
 A1b_model <- ml_fit(p=A1b_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A1b,spmatrix=A1b_spmatrix,phylomatrix=A1b_phylomatrix)
@@ -1571,19 +1582,20 @@ A2_ml_data_AIC_nc$deltaAIC <- A2_ml_data_AIC_nc$AIC - min_AIC
 write.csv(A2_ml_data_AIC_nc, file = "output/A2/A2_ml_data_AIC_nc.csv", row.names=FALSE)
 
 # --- Best p values for all models ---
-A2_p.res <- sbplx(c(0.5, 0.5, 0.5),
-               best_p,
-               formula=Phoneme.Inventory.Size~1,
-               data=A2,
-               spmatrix=A2_spmatrix,phylomatrix=A2_phylomatrix,
-               lower=c(0,0,0),upper=c(1,1,1),
-               nl.info = TRUE)
-# Save p.res and covariance matrix
-save(A2_p.res, file = "output/A2/A2_p_res.RData")
-spmatrix_temp <- A2_spmatrix/max(A2_spmatrix)
-spmatrix_temp <- exp(-(spmatrix_temp/A2_p.res$par[2])^2)
-A2_mat <- as.matrix((A2_p.res$par[3]*(1-A2_p.res$par[1])*spmatrix_temp+(1-A2_p.res$par[1])*(1-A2_p.res$par[3])*A2_phylomatrix+A2_p.res$par[1]*diag(dim(A2_phylomatrix)[1])))
-save(A2_mat, file = "output/A2/A2_mat.RData")
+load("data/A2/A2_p_res.RData")
+# A2_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                best_p,
+#                formula=Phoneme.Inventory.Size~1,
+#                data=A2,
+#                spmatrix=A2_spmatrix,phylomatrix=A2_phylomatrix,
+#                lower=c(0,0,0),upper=c(1,1,1),
+#                nl.info = TRUE)
+# # Save p.res and covariance matrix
+# save(A2_p.res, file = "output/A2/A2_p_res.RData")
+# spmatrix_temp <- A2_spmatrix/max(A2_spmatrix)
+# spmatrix_temp <- exp(-(spmatrix_temp/A2_p.res$par[2])^2)
+# A2_mat <- as.matrix((A2_p.res$par[3]*(1-A2_p.res$par[1])*spmatrix_temp+(1-A2_p.res$par[1])*(1-A2_p.res$par[3])*A2_phylomatrix+A2_p.res$par[1]*diag(dim(A2_phylomatrix)[1])))
+# save(A2_mat, file = "output/A2/A2_mat.RData")
 
 # --- Maximum likelihood fits for all models ---
 A2_fits <- mclapply(
@@ -1733,19 +1745,20 @@ for (i in 1:n_pred) {
 }
 
 # --- Best p values for all models ---
-A3a_p.res <- sbplx(c(0.5, 0.5, 0.5),
-               best_p,
-               formula=Phoneme.Inventory.Size~1,
-               data=A3a,
-               spmatrix=A3a_spmatrix,phylomatrix=A3a_phylomatrix,
-               lower=c(0,0,0),upper=c(1,1,1),
-               nl.info = TRUE)
-# Save p.res and covariance matrix
-save(A3a_p.res, file = "output/A3a/A3a_p_res.RData")
-spmatrix_temp <- A3a_spmatrix/max(A3a_spmatrix)
-spmatrix_temp <- exp(-(spmatrix_temp/A3a_p.res$par[2])^2)
-A3a_mat <- as.matrix((A3a_p.res$par[3]*(1-A3a_p.res$par[1])*spmatrix_temp+(1-A3a_p.res$par[1])*(1-A3a_p.res$par[3])*A3a_phylomatrix+A3a_p.res$par[1]*diag(dim(A3a_phylomatrix)[1])))
-save(A3a_mat, file = "output/A3a/A3a_mat.RData")
+load("data/A3a/A3a_p_res.RData")
+# A3a_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                best_p,
+#                formula=Phoneme.Inventory.Size~1,
+#                data=A3a,
+#                spmatrix=A3a_spmatrix,phylomatrix=A3a_phylomatrix,
+#                lower=c(0,0,0),upper=c(1,1,1),
+#                nl.info = TRUE)
+# # Save p.res and covariance matrix
+# save(A3a_p.res, file = "output/A3a/A3a_p_res.RData")
+# spmatrix_temp <- A3a_spmatrix/max(A3a_spmatrix)
+# spmatrix_temp <- exp(-(spmatrix_temp/A3a_p.res$par[2])^2)
+# A3a_mat <- as.matrix((A3a_p.res$par[3]*(1-A3a_p.res$par[1])*spmatrix_temp+(1-A3a_p.res$par[1])*(1-A3a_p.res$par[3])*A3a_phylomatrix+A3a_p.res$par[1]*diag(dim(A3a_phylomatrix)[1])))
+# save(A3a_mat, file = "output/A3a/A3a_mat.RData")
 
 # --- Transform Mainland Continent predictors (depending on whether Island predictor present) ---
 A3a_v1 <- A3a # Version for models with Island predictor
@@ -1895,19 +1908,20 @@ for (i in 1:n_pred) {
 }
 
 # --- Best p values for all models ---
-A3b_p.res <- sbplx(c(0.5, 0.5, 0.5),
-               best_p,
-               formula=Phoneme.Inventory.Size~1,
-               data=A3b,
-               spmatrix=A3b_spmatrix,phylomatrix=A3b_phylomatrix,
-               lower=c(0,0,0),upper=c(1,1,1),
-               nl.info = TRUE)
-# Save p.res and covariance matrix
-save(A3b_p.res, file = "output/A3b/A3b_p_res.RData")
-spmatrix_temp <- A3b_spmatrix/max(A3b_spmatrix)
-spmatrix_temp <- exp(-(spmatrix_temp/A3b_p.res$par[2])^2)
-A3b_mat <- as.matrix((A3b_p.res$par[3]*(1-A3b_p.res$par[1])*spmatrix_temp+(1-A3b_p.res$par[1])*(1-A3b_p.res$par[3])*A3b_phylomatrix+A3b_p.res$par[1]*diag(dim(A3b_phylomatrix)[1])))
-save(A3b_mat, file = "output/A3b/A3b_mat.RData")
+load("data/A3b/A3b_p_res.RData")
+# A3b_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                best_p,
+#                formula=Phoneme.Inventory.Size~1,
+#                data=A3b,
+#                spmatrix=A3b_spmatrix,phylomatrix=A3b_phylomatrix,
+#                lower=c(0,0,0),upper=c(1,1,1),
+#                nl.info = TRUE)
+# # Save p.res and covariance matrix
+# save(A3b_p.res, file = "output/A3b/A3b_p_res.RData")
+# spmatrix_temp <- A3b_spmatrix/max(A3b_spmatrix)
+# spmatrix_temp <- exp(-(spmatrix_temp/A3b_p.res$par[2])^2)
+# A3b_mat <- as.matrix((A3b_p.res$par[3]*(1-A3b_p.res$par[1])*spmatrix_temp+(1-A3b_p.res$par[1])*(1-A3b_p.res$par[3])*A3b_phylomatrix+A3b_p.res$par[1]*diag(dim(A3b_phylomatrix)[1])))
+# save(A3b_mat, file = "output/A3b/A3b_mat.RData")
 
 # --- Maximum likelihood fits for all models ---
 A3b_fits <- mclapply(
@@ -1985,18 +1999,19 @@ write.csv(A3b_ml_data, file = "output/A3b/A3b_ml_data.csv", row.names=FALSE)
 A4_model <- c(Phoneme.Inventory.Size ~ documentation)
 
 # --- Best p values for all models ---
-A4_p.res <- sbplx(c(0.5, 0.5, 0.5),
-               best_p,
-               formula=A4_model[[1]],
-               data=A4,
-               spmatrix=A4_spmatrix,phylomatrix=A4_phylomatrix,
-               lower=c(0,0,0),upper=c(1,1,1),
-               nl.info = TRUE)
-# Save p.res and covariance matrix
-save(A4_p.res, file = "output/A4/A4_p_res.RData")
-spmatrix_temp <- A4_spmatrix/max(A4_spmatrix)
-spmatrix_temp <- exp(-(spmatrix_temp/A4_p.res$par[2])^2)
-mat <- as.matrix((A4_p.res$par[3]*(1-A4_p.res$par[1])*spmatrix_temp+(1-A4_p.res$par[1])*(1-A4_p.res$par[3])*A4_phylomatrix+A4_p.res$par[1]*diag(dim(A4_phylomatrix)[1])))
+load("data/A4/A4_p_res.RData")
+# A4_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                best_p,
+#                formula=A4_model[[1]],
+#                data=A4,
+#                spmatrix=A4_spmatrix,phylomatrix=A4_phylomatrix,
+#                lower=c(0,0,0),upper=c(1,1,1),
+#                nl.info = TRUE)
+# # Save p.res and covariance matrix
+# save(A4_p.res, file = "output/A4/A4_p_res.RData")
+# spmatrix_temp <- A4_spmatrix/max(A4_spmatrix)
+# spmatrix_temp <- exp(-(spmatrix_temp/A4_p.res$par[2])^2)
+# mat <- as.matrix((A4_p.res$par[3]*(1-A4_p.res$par[1])*spmatrix_temp+(1-A4_p.res$par[1])*(1-A4_p.res$par[3])*A4_phylomatrix+A4_p.res$par[1]*diag(dim(A4_phylomatrix)[1])))
 
 # --- Maximum likelihood fits for all models A1b ---
 A4_model <- ml_fit(p=A4_p.res$par,formula=A4_model[[1]],data=A4,spmatrix=A4_spmatrix,phylomatrix=A4_phylomatrix)
@@ -2012,15 +2027,16 @@ print(BIC(A5a_l1))
 print(logLik(A5a_l1))
 
 # --- Best p values for all models A5a ---
-A5a_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                   best_p,
-                   formula=Phoneme.Inventory.Size ~ L1_pop,
-                   data=A5a,
-                   spmatrix=A5a_spmatrix,phylomatrix=A5a_phylomatrix,
-                   lower=c(0,0,0),upper=c(1,1,1),
-                   nl.info = TRUE)
-# Save p.res
-save(A5a_p.res, file = "output/A5a/A5a_p_res.RData")
+load("data/A5a/A5a_p_res.RData")
+# A5a_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                    best_p,
+#                    formula=Phoneme.Inventory.Size ~ L1_pop,
+#                    data=A5a,
+#                    spmatrix=A5a_spmatrix,phylomatrix=A5a_phylomatrix,
+#                    lower=c(0,0,0),upper=c(1,1,1),
+#                    nl.info = TRUE)
+# # Save p.res
+# save(A5a_p.res, file = "output/A5a/A5a_p_res.RData")
 
 # --- Maximum likelihood fits for all models A5a ---
 A5a_model <- ml_fit(p=A5a_p.res$par,formula=Phoneme.Inventory.Size ~ L1_pop,data=A5a,spmatrix=A5a_spmatrix,phylomatrix=A5a_phylomatrix)
@@ -2054,19 +2070,20 @@ for (i in 1:n_pred) {
 unlist(A5b_models)
 
 # --- Best p values for all models ---
-A5b_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                  best_p,
-                  formula=Phoneme.Inventory.Size~1,
-                  data=A5b,
-                  spmatrix=A5b_spmatrix,phylomatrix=A5b_phylomatrix,
-                  lower=c(0,0,0),upper=c(1,1,1),
-                  nl.info = TRUE)
-# Save p.res and covariance matrix
-save(A5b_p.res, file = "output/A5b/A5b_p_res.RData")
-spmatrix_temp <- A5b_spmatrix/max(A5b_spmatrix)
-spmatrix_temp <- exp(-(spmatrix_temp/A5b_p.res$par[2])^2)
-A5b_mat <- as.matrix((A5b_p.res$par[3]*(1-A5b_p.res$par[1])*spmatrix_temp+(1-A5b_p.res$par[1])*(1-A5b_p.res$par[3])*A5b_phylomatrix+A5b_p.res$par[1]*diag(dim(A5b_phylomatrix)[1])))
-save(A5b_mat, file = "output/A5b/A5b_mat.RData")
+load("data/A5b/A5b_p_res.RData")
+# A5b_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                   best_p,
+#                   formula=Phoneme.Inventory.Size~1,
+#                   data=A5b,
+#                   spmatrix=A5b_spmatrix,phylomatrix=A5b_phylomatrix,
+#                   lower=c(0,0,0),upper=c(1,1,1),
+#                   nl.info = TRUE)
+# # Save p.res and covariance matrix
+# save(A5b_p.res, file = "output/A5b/A5b_p_res.RData")
+# spmatrix_temp <- A5b_spmatrix/max(A5b_spmatrix)
+# spmatrix_temp <- exp(-(spmatrix_temp/A5b_p.res$par[2])^2)
+# A5b_mat <- as.matrix((A5b_p.res$par[3]*(1-A5b_p.res$par[1])*spmatrix_temp+(1-A5b_p.res$par[1])*(1-A5b_p.res$par[3])*A5b_phylomatrix+A5b_p.res$par[1]*diag(dim(A5b_phylomatrix)[1])))
+# save(A5b_mat, file = "output/A5b/A5b_mat.RData")
 
 # --- Maximum likelihood fits for all models ---
 A5b_fits <- mclapply(
@@ -2154,6 +2171,22 @@ A5b_ml_data_AIC$deltaAIC <- A5b_ml_data_AIC$AIC - min_AIC
 # Save output
 write.csv(A5b_ml_data_AIC, file = "output/A5b/A5b_ml_data_AIC.csv", row.names=FALSE)
 
+# --- Only find p.res and ML fit for PISc_a ~ L1_pop ---
+load("data/A5b/A5b_L1_p_res.RData")
+# A5b_L1_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                       best_p,
+#                       formula=Phoneme.Inventory.Size~L1_pop,
+#                       data=A5b,
+#                       spmatrix=A5b_spmatrix,phylomatrix=A5b_phylomatrix,
+#                       lower=c(0,0,0),upper=c(1,1,1),
+#                       nl.info = TRUE)
+# # Save p.res
+# save(A5b_L1_p.res, file = "output/A5b/A5b_L1_p_res.RData")
+# --- Maximum likelihood fits for all models ---
+A5b_L1_fit <- ml_fit(p=A5b_L1_p.res$par,formula=Phoneme.Inventory.Size~L1_pop,data=A5b,spmatrix=A5b_spmatrix,phylomatrix=A5b_phylomatrix)
+# Save model
+save(A5b_L1_fit, file="output/A5b/A5b_L1_fit.RData")
+
 ## --- A5c --- ####
 
 # --- Get PISc ~ Area OLS ---
@@ -2189,19 +2222,20 @@ for (i in 1:n_pred) {
 }
 
 # --- Best p values for all models ---
-A5c_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                   best_p,
-                   formula=Phoneme.Inventory.Size~1,
-                   data=A5c,
-                   spmatrix=A5c_spmatrix,phylomatrix=A5c_phylomatrix,
-                   lower=c(0,0,0),upper=c(1,1,1),
-                   nl.info = TRUE)
-# Save p.res and covariance matrix
-save(A5c_p.res, file = "output/A5c/A5c_p_res.RData")
-spmatrix_temp <- A5c_spmatrix/max(A5c_spmatrix)
-spmatrix_temp <- exp(-(spmatrix_temp/A5c_p.res$par[2])^2)
-A5c_mat <- as.matrix((A5c_p.res$par[3]*(1-A5c_p.res$par[1])*spmatrix_temp+(1-A5c_p.res$par[1])*(1-A5c_p.res$par[3])*A5c_phylomatrix+A5c_p.res$par[1]*diag(dim(A5c_phylomatrix)[1])))
-save(A5c_mat, file = "output/A5c/A5c_mat.RData")
+load("data/A5c/A5c_p_res.RData")
+# A5c_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                    best_p,
+#                    formula=Phoneme.Inventory.Size~1,
+#                    data=A5c,
+#                    spmatrix=A5c_spmatrix,phylomatrix=A5c_phylomatrix,
+#                    lower=c(0,0,0),upper=c(1,1,1),
+#                    nl.info = TRUE)
+# # Save p.res and covariance matrix
+# save(A5c_p.res, file = "output/A5c/A5c_p_res.RData")
+# spmatrix_temp <- A5c_spmatrix/max(A5c_spmatrix)
+# spmatrix_temp <- exp(-(spmatrix_temp/A5c_p.res$par[2])^2)
+# A5c_mat <- as.matrix((A5c_p.res$par[3]*(1-A5c_p.res$par[1])*spmatrix_temp+(1-A5c_p.res$par[1])*(1-A5c_p.res$par[3])*A5c_phylomatrix+A5c_p.res$par[1]*diag(dim(A5c_phylomatrix)[1])))
+# save(A5c_mat, file = "output/A5c/A5c_mat.RData")
 
 # --- Maximum likelihood fits for all models ---
 A5c_fits <- mclapply(
@@ -2295,18 +2329,19 @@ write.csv(A5c_ml_data_AIC, file = "output/A5c/A5c_ml_data_AIC.csv", row.names=FA
 A5d_model <- c(Phoneme.Inventory.Size ~ documentation)
 
 # --- Best p values for all models ---
-A5d_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                  best_p,
-                  formula=A5d_model[[1]],
-                  data=A5d,
-                  spmatrix=A5d_spmatrix,phylomatrix=A5d_phylomatrix,
-                  lower=c(0,0,0),upper=c(1,1,1),
-                  nl.info = TRUE)
-# Save p.res and covariance matrix
-save(A5d_p.res, file = "output/A5d/A5d_p_res.RData")
-spmatrix_temp <- A5d_spmatrix/max(A5d_spmatrix)
-spmatrix_temp <- exp(-(spmatrix_temp/A5d_p.res$par[2])^2)
-mat <- as.matrix((A5d_p.res$par[3]*(1-A5d_p.res$par[1])*spmatrix_temp+(1-A5d_p.res$par[1])*(1-A5d_p.res$par[3])*A5d_phylomatrix+A5d_p.res$par[1]*diag(dim(A5d_phylomatrix)[1])))
+load("data/A5d/A5d_p_res.RData")
+# A5d_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                   best_p,
+#                   formula=A5d_model[[1]],
+#                   data=A5d,
+#                   spmatrix=A5d_spmatrix,phylomatrix=A5d_phylomatrix,
+#                   lower=c(0,0,0),upper=c(1,1,1),
+#                   nl.info = TRUE)
+# # Save p.res and covariance matrix
+# save(A5d_p.res, file = "output/A5d/A5d_p_res.RData")
+# spmatrix_temp <- A5d_spmatrix/max(A5d_spmatrix)
+# spmatrix_temp <- exp(-(spmatrix_temp/A5d_p.res$par[2])^2)
+# mat <- as.matrix((A5d_p.res$par[3]*(1-A5d_p.res$par[1])*spmatrix_temp+(1-A5d_p.res$par[1])*(1-A5d_p.res$par[3])*A5d_phylomatrix+A5d_p.res$par[1]*diag(dim(A5d_phylomatrix)[1])))
 
 # --- Maximum likelihood fits for all models A1b ---
 A5d_model <- ml_fit(p=A5d_p.res$par,formula=A5d_model[[1]],data=A5d,spmatrix=A5d_spmatrix,phylomatrix=A5d_phylomatrix)
@@ -2323,18 +2358,19 @@ A6_OLS <- lm(data=A6, formula = L1_pop ~ documentation)
 summary(A6_OLS)
 
 # --- Best p values for GLS models ---
-A6_p.res <- sbplx(c(0.5, 0.5, 0.5),
-                  best_p,
-                  formula=L1_pop ~ documentation,
-                  data=A6,
-                  spmatrix=A6_spmatrix,phylomatrix=A6_phylomatrix,
-                  lower=c(0,0,0),upper=c(1,1,1),
-                  nl.info = TRUE)
-# Save p.res and covariance matrix
-save(A6_p.res, file = "output/A6/A6_p_res.RData")
-spmatrix_temp <- A6_spmatrix/max(A6_spmatrix)
-spmatrix_temp <- exp(-(spmatrix_temp/A6_p.res$par[2])^2)
-mat <- as.matrix((A6_p.res$par[3]*(1-A6_p.res$par[1])*spmatrix_temp+(1-A6_p.res$par[1])*(1-A6_p.res$par[3])*A6_phylomatrix+A6_p.res$par[1]*diag(dim(A6_phylomatrix)[1])))
+load("data/A6/A6_p_res.RData")
+# A6_p.res <- sbplx(c(0.5, 0.5, 0.5),
+#                   best_p,
+#                   formula=L1_pop ~ documentation,
+#                   data=A6,
+#                   spmatrix=A6_spmatrix,phylomatrix=A6_phylomatrix,
+#                   lower=c(0,0,0),upper=c(1,1,1),
+#                   nl.info = TRUE)
+# # Save p.res and covariance matrix
+# save(A6_p.res, file = "output/A6/A6_p_res.RData")
+# spmatrix_temp <- A6_spmatrix/max(A6_spmatrix)
+# spmatrix_temp <- exp(-(spmatrix_temp/A6_p.res$par[2])^2)
+# mat <- as.matrix((A6_p.res$par[3]*(1-A6_p.res$par[1])*spmatrix_temp+(1-A6_p.res$par[1])*(1-A6_p.res$par[3])*A6_phylomatrix+A6_p.res$par[1]*diag(dim(A6_phylomatrix)[1])))
 
 # --- Maximum likelihood fits for all models A1b ---
 A6_model <- ml_fit(p=A6_p.res$par,formula=L1_pop ~ documentation,data=A6,spmatrix=A6_spmatrix,phylomatrix=A6_phylomatrix)
