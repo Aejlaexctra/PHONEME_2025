@@ -2,7 +2,7 @@ This is the code repository for the paper **Is phoneme inventory size influenced
 
 ## Data
 
-Datasets used by in the analysis are included in `data` folder within the repository. Phylogenetic and spatial distance matrices, found in `data/distance_matrices` are subsets of matrices from (3). The PHOIBLE phoneme inventory from (1) is found in `data/phoible`. Data for the second phoneme inventory `data/NEE22.csv` is taken from (2), and data for the majority of the predictors used in this study `data/NEE24.csv` are from (4).
+Datasets used by in the analysis are included in `data` folder within the repository. Phylogenetic and spatial distance matrices, found in `data/distance_matrices` are subsets of matrices from (3). The PHOIBLE phoneme inventory from (1) is found in `data/phoible`. Data for the second phoneme inventory `data/NEE22.csv` is taken from (5), and data for the predictors used in this study `data/NEE24.csv` are from (2) and (4).
 
 ## Code
 
@@ -64,7 +64,7 @@ There are 11 rounds of analysis (see paper for overview of predictor and respons
 
 -   A6 - L1_pop \~ Documentation, N = 1716
 
-Where PISa are phoneme inventories from (1), PISc phoneme inventories from (2), PISc_i are only island endemic languages within PISc, PISa_c are only languages in PISa that are also within PISc, and PISc_a are only languages in PISc that are also within PISa.
+Where PISa are phoneme inventories from (1), PISc phoneme inventories from (5), PISc_i are only island endemic languages within PISc, PISa_c are only languages in PISa that are also within PISc, and PISc_a are only languages in PISc that are also within PISa.
 
 ### References
 
@@ -75,3 +75,6 @@ Where PISa are phoneme inventories from (1), PISc phoneme inventories from (2), 
 (3) Hua, X., Greenhill, S. J., Cardillo, M., Schneemann, H., & Bromham, L. (2019). The ecological drivers of variation in global language diversity. Nature Communications, 10(1), 2047. https://doi.org/10.1038/s41467-019-09842-2
 
 (4) Bromham, L., Dinnage, R., Skirgård, H., Ritchie, A., Cardillo, M., Meakins, F., Greenhill, S., & Hua, X. (2022). Global predictors of language endangerment and the future of linguistic diversity. Nature Ecology & Evolution, 6(2), 163–173. https://doi.org/10.1038/s41559-021-01604-y
+
+(5) Creanza, N., Ruhlen, M., Pemberton, T. J., Rosenberg, N. A., Feldman, M. W., & Ramachandran, S. (2015). A comparison of worldwide phonemic and genetic variation in human populations. Proceedings of the National Academy of Sciences, 112(5), 1265–1272. https://doi.org/10.1073/pnas.1424033112
+
