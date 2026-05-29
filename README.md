@@ -2,7 +2,7 @@ This is the code repository for the paper **Is phoneme inventory size influenced
 
 ## Data
 
-Datasets used by in the analysis are included in `data` folder within the repository. Phylogenetic and spatial distance matrices, found in `data/distance_matrices` are subsets of matrices from (3). The PHOIBLE phoneme inventory from (1) is found in `data/phoible`. Data for the second phoneme inventory `data/NEE22.csv` is taken from (5), and data for the predictors used in this study `data/NEE24.csv` are from (2) and (4).
+Datasets used by in the analysis are included in `data` folder within the repository. Phylogenetic and spatial distance matrices, found in `data/distance_matrices` are subsets of matrices from (4). The PHOIBLE phoneme inventory from (1) is found in `data/phoible`. Data for the second phoneme inventory `data/NEE22.csv` is taken from (5), and data for the predictors used in this study `data/NEE24.csv` are from (2) and (4).
 
 ## Code
 
