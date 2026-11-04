@@ -12,6 +12,7 @@ library(patchwork)
 library(dplyr)
 library(tidyr)
 library(maps)
+library(cowplot)
 
 ## --- Loading Complete Phylogenetic and Spatial Distance Matrices --- ####
 # Phylogenetic distance matrix
